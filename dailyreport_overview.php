@@ -883,6 +883,7 @@ if (!$result) {
       <thead>
         <tr>
           <th>Details</th>
+          <th>ID</th>
           <th>Date</th>
           <th>Project</th>
           <th>Department</th>
@@ -915,7 +916,8 @@ if (!$result) {
               data-closure-notes="<?= htmlspecialchars($row['closure_notes']) ?>">
           <td>
             <button class="expand-btn" onclick="toggleDetails(<?= $report_id ?>)" id="btn_<?= $report_id ?>">+</button>
-          </td>        
+          </td>
+          <td><?= htmlspecialchars($row['id']) ?></td>        
           <td><?= htmlspecialchars($row['date']) ?></td>
           <td><?= htmlspecialchars($row['project_name'] ?? '_') ?></td>
           <td><?= htmlspecialchars($row['department_name'] ?? '_') ?></td>
@@ -937,7 +939,7 @@ if (!$result) {
         
         <!-- Details Row -->
         <tr class="details-row" id="details_<?= $report_id ?>">
-          <td colspan="15">
+          <td colspan="16">
             <div class="details-content">
               <div class="details-images">
                 <!-- Original Image -->
@@ -1018,7 +1020,7 @@ if (!$result) {
         <?php
       }
     } else {
-      echo "<tr><td colspan='15'>No reports found</td></tr>";
+      echo "<tr><td colspan='16'>No reports found</td></tr>";
     }
     ?>
     </tbody>

@@ -1,0 +1,204 @@
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f5f9;
+            color: #333;
+        }
+		nav.navbar:hover {
+			box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+		}
+		.fixed-top {
+		  position: fixed;
+		  top: 0;
+		  width: 100%;
+		  z-index: 9999;
+		}		
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .full-width-image {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .full-width-image img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .options label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .next-button,
+        .prev-button,
+        input[type="submit"] {
+            padding: 10px 20px;
+            background-color: #3498db;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        .prev-button {
+            background-color: #ccc;
+            margin-right: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+		#clientForm {
+            margin: 20px 0;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #clientForm label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        #clientForm select {
+            width: 50%;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        #clientForm input[type="text"],
+        #clientForm input[type="email"],
+        #clientForm input[type="number"] {
+            width: 80%;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        #clientForm .next-button {
+            width: 80%;
+			padding: 10px 20px;
+            background-color: #3498db;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+		.input-row {
+			display: flex;
+			justify-content: 10px;
+			margin-bottom: 10px;
+		}
+		.project-input {
+			font-size: 18px; /* Adjust the font size as needed */
+			flex-grow: 1; /* Expand to fill available space */
+			margin-right: 200px; /* Adjust as needed */
+		}
+		
+
+		.input-row input {
+			flex-grow: 3;
+			margin-left: 0px; /* Adjust as needed */
+		}
+		.navbar-nav li a i {
+            font-size: 20px; /* Adjust the size as needed */
+            display: inline-block;
+            border-radius: 50%;
+            padding: 3px; /* Adjust the padding to control the circle size */
+            text-align: center;
+            width: 30px; /* Adjust the width and height to control the circle size */
+            height: 30px;
+            color: #000; /* Default icon color */
+            background-color: transparent; /* Default background color */
+            transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+
+        .navbar-nav li a:hover i {
+            transform: scale(1.2); /* Adjust the scaling factor for hover effect */
+            background-color: #3498db; /* Adjust the background color */
+            color: #fff; /* Adjust the icon color on hover */
+        }
+		
+		 .navbar-brand {
+            display: flex;
+            align-items: center;
+            padding: 0px; /* Remove padding to allow full-width alignment */
+        }
+
+        /* Add margin between logo and text */
+        .navbar-brand img {
+             margin-right: 240px; /* Adjust the margin as needed */
+			 margin-left: 20px; /* Adjust the margin-left to increase left space */
+        }
+		.navbar-text {
+        font-size: 15px; /* Adjust the font size as needed */
+		margin-left: 0px; /* Adjust the margin-left to increase left space */
+    }
+	* RTL styles */
+	html[dir="rtl"] .logo-right {
+		text-align: right; /* Align logo to the right */
+	}
+
+	html[dir="rtl"] .navbar-header {
+		float: left; /* Float the header content to the left */
+	}
+	
+		/* Media query for responsiveness */
+@media (max-width: 768px) {
+    form, #clientForm {
+        max-width: 100%; /* Make the form full width on smaller screens */
+        margin: 10 10px; /* Add margin to the sides */
+    }
+
+    .navbar-brand img {
+        width: 100px; /* Adjust the width as needed */
+        height: auto; /* Automatically maintain aspect ratio */
+        margin-left: 20px; /* Adjust the margin-left to increase left space */
+        margin-right: 10px; /* Adjust the margin-right as needed */
+    }
+
+	
+    /* Decrease text size in mobile mode */
+    .navbar-text {
+        font-size: 12px; /* Adjust the font size as needed */
+    }
+
+    /* Adjust spacing for social media icons */
+    .navbar-nav li {
+        margin: 3px 3px; /* Add vertical and horizontal margin to each icon */
+    }
+}

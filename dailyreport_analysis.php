@@ -102,9 +102,31 @@ $finalClause = $whereClause
   : "WHERE $overdueCondition";
 
 $overdueDetailResult = runQuery($conn, "
-    SELECT dr.id, d.department_name, dr.risk, dr.date, dr.closed_at
+    SELECT 
+        dr.id,
+        dr.date,
+        pr.project_name,
+        d.department_name,
+        dr.work_type,
+        dr.risk,
+        dr.observation_description,
+        dr.description,
+        dr.observation,
+        dr.operation_corrective,
+        dr.report_status,
+        dr.closed_at,
+        dr.image_upload,
+        dr.user_id,
+        dr.closure_notes,
+        dr.closure_image,
+        dr.closed_by,
+        u.username,
+        u2.username as closed_by_username
     FROM daily_report dr
+    LEFT JOIN project pr ON dr.project = pr.id
     LEFT JOIN department d ON dr.department = d.id
+    LEFT JOIN users u ON dr.user_id = u.id
+    LEFT JOIN users u2 ON dr.closed_by = u2.id
     $finalClause
     ORDER BY dr.date DESC
 ", "Overdue Detail");
@@ -175,7 +197,7 @@ $overdueCount = count($overdueReports);
     h2 {
       text-align: center;
       color: #333;
-      margin-top: 30px;
+      margin-top: 70px;
     }
 
     .dashboard-wrapper {
@@ -212,11 +234,12 @@ $overdueCount = count($overdueReports);
 
 
     .sidebar {
-      width: 550px;
+      width: 800px;
       background: #fff;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
       padding: 20px;
+      overflow-x: auto;
     }
 
     .toggle-button {
@@ -249,14 +272,16 @@ $overdueCount = count($overdueReports);
       width: 100%;
       border-collapse: collapse;
       margin-top: 15px;
-      font-size: 14px;
+      font-size: 12px;
+      table-layout: auto;
     }
 
     th,
     td {
       border: 1px solid #ccc;
-      padding: 8px;
+      padding: 6px 4px;
       text-align: center;
+      word-wrap: break-word;
     }
 
     thead {
@@ -275,6 +300,160 @@ $overdueCount = count($overdueReports);
     .filter-form select {
       padding: 6px 10px;
       margin: 0 10px;
+    }
+
+    /* Expand/Collapse Button Styles */
+    .expand-btn {
+      background: #4CAF50;
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 14px;
+      margin: 2px 2px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: background-color 0.3s;
+    }
+    
+    .expand-btn:hover {
+      background-color: #45a049;
+    }
+    
+    .expand-btn.expanded {
+      background: #f44336;
+    }
+    
+    .expand-btn.expanded:hover {
+      background-color: #da190b;
+    }
+    
+    .details-row {
+      display: none;
+      background-color: #f9f9f9;
+      border-top: 1px solid #ddd;
+    }
+    
+    .details-content {
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    
+    .details-images {
+      flex: 0 0 300px;
+      text-align: center;
+    }
+    
+    .image-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+
+    .image-section img {
+      max-width: 150px;
+      max-height: 180px;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .image-section img:hover {
+      transform: scale(1.8);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      z-index: 2;
+    }
+    
+    .image-section h5 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #333;
+      font-weight: bold;
+      font-size: 12px;
+    }
+    
+    .details-notes {
+      flex: 1;
+      background: white;
+      padding: 15px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
+    
+    .details-notes h4 {
+      margin-top: 0;
+      color: #333;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 5px;
+      font-size: 14px;
+    }
+    
+    .note-item {
+      margin-bottom: 15px;
+      padding: 10px;
+      background: #f8f8f8;
+      border-left: 3px solid #4CAF50;
+      border-radius: 3px;
+    }
+    
+    .note-item.closure {
+      border-left-color: #2196F3;
+    }
+    
+    .note-label {
+      font-weight: bold;
+      color: #555;
+      margin-bottom: 5px;
+      font-size: 12px;
+    }
+    
+    .note-content {
+      white-space: pre-wrap;
+      line-height: 1.6;
+      color: #333;
+      font-size: 12px;
+    }
+    
+    .no-image {
+      color: #999;
+      font-style: italic;
+      padding: 15px;
+      text-align: center;
+      background: #f5f5f5;
+      border: 2px dashed #ddd;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+    
+    .email-btn {
+      background: #2196F3;
+      border: none;
+      color: white;
+      padding: 4px 8px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 11px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: background-color 0.3s;
+      white-space: nowrap;
+    }
+    
+    .email-btn:hover {
+      background-color: #0b7dda;
+    }
+    
+    .email-btn:disabled {
+      background-color: #9E9E9E;
+      cursor: not-allowed;
     }
   </style>
 </head>
@@ -339,6 +518,7 @@ $overdueCount = count($overdueReports);
           <table>
             <thead>
               <tr>
+                <th>Details</th>
                 <th>ID</th>
                 <th>Department</th>
                 <th>Risk</th>
@@ -347,11 +527,21 @@ $overdueCount = count($overdueReports);
                 <th>Delay (hrs)</th>
                 <th>Overdue By</th>
                 <th>Tag</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              <?php foreach ($overdueReports as $r): ?>
-                <tr>
+              <?php foreach ($overdueReports as $r): 
+                $report_id = $r['id'];
+                $closedBy = ($r['closed_by_username']) ? htmlspecialchars($r['closed_by_username']) : "—";
+              ?>
+                <tr id="row_<?= $report_id ?>" 
+                    data-image="<?= htmlspecialchars($r['image_upload']) ?>"
+                    data-closure-image="<?= htmlspecialchars($r['closure_image']) ?>"
+                    data-closure-notes="<?= htmlspecialchars($r['closure_notes']) ?>">
+                  <td>
+                    <button class="expand-btn" onclick="toggleDetails(<?= $report_id ?>)" id="btn_<?= $report_id ?>">+</button>
+                  </td>
                   <td><?= htmlspecialchars($r['id']) ?></td>
                   <td><?= htmlspecialchars($r['department_name'] ?? '—') ?></td>
                   <td><?= htmlspecialchars($r['risk']) ?></td>
@@ -360,6 +550,119 @@ $overdueCount = count($overdueReports);
                   <td><?= htmlspecialchars($r['delay']) ?></td>
                   <td><?= htmlspecialchars($r['exceeded_by']) ?> hrs late</td>
                   <td><?= htmlspecialchars($r['tag']) ?></td>
+                  <td>
+                    <button class="email-btn" onclick="sendOverdueEmail(<?= $report_id ?>)" 
+                            data-report-id="<?= $report_id ?>"
+                            id="email_btn_<?= $report_id ?>">
+                      📧 Send Email
+                    </button>
+                  </td>
+                </tr>
+                
+                <!-- Details Row -->
+                <tr class="details-row" id="details_<?= $report_id ?>">
+                  <td colspan="9">
+                    <div class="details-content">
+                      <div class="details-images">
+                        <!-- Original Image -->
+                        <div class="image-section">
+                          <h5>📸 Original Observation Images</h5>
+                          <?php
+                          if (!empty($r['image_upload'])) {
+                              $images = json_decode($r['image_upload'], true);
+                              
+                              if (is_array($images)) {
+                                  foreach ($images as $imgPath) {
+                                      $webPath = ltrim($imgPath, '/');
+                                      echo '<img src="assests/uploads/' . htmlspecialchars($webPath) . '" alt="Observation Image" />';
+                                  }
+                              } else {
+                                  $webPath = ltrim($r['image_upload'], '/');
+                                  echo '<img src="assests/uploads/' . htmlspecialchars($webPath) . '" alt="Observation Image" />';
+                              }
+                          } else {
+                              echo '<div class="no-image">No original images available</div>';
+                          }
+                          ?>
+                        </div>
+                        
+                        <!-- Closure Images (only show if observation is closed) -->
+                        <?php if ($r['report_status'] == 1): ?>
+                          <div class="image-section">
+                            <h5>✅ Closure Images</h5>
+                            <?php if (!empty($r['closure_image'])): ?>
+                              <?php
+                              $closure_images = json_decode($r['closure_image'], true);
+                              
+                              if (is_array($closure_images)) {
+                                  foreach ($closure_images as $imgPath) {
+                                      $webPath = ltrim($imgPath, '/');
+                                      echo '<img src="assests/uploads/closures/' . htmlspecialchars($webPath) . '" alt="Closure Image" />';
+                                  }
+                              } else {
+                                  $closureWebPath = ltrim($r['closure_image'], '/');
+                                  if (strpos($closureWebPath, 'assests/uploads/closures/') === 0) {
+                                      echo '<img src="' . htmlspecialchars($closureWebPath) . '" alt="Closure Image" />';
+                                  } else {
+                                      echo '<img src="assests/uploads/closures/' . htmlspecialchars($closureWebPath) . '" alt="Closure Image" />';
+                                  }
+                              }
+                              ?>
+                            <?php else: ?>
+                              <div class="no-image">No closure images available</div>
+                            <?php endif; ?>
+                          </div>
+                        <?php endif; ?>
+                      </div>
+                      
+                      <div class="details-notes">
+                        <h4>📋 Full Report Details</h4>
+                        
+                        <div class="note-item">
+                          <div class="note-label">📍 Project:</div>
+                          <div class="note-content"><?= htmlspecialchars($r['project_name'] ?? 'N/A') ?></div>
+                        </div>
+                        
+                        <div class="note-item">
+                          <div class="note-label">🔧 Work Type:</div>
+                          <div class="note-content"><?= htmlspecialchars($r['work_type']) ?></div>
+                        </div>
+                        
+                        <div class="note-item">
+                          <div class="note-label">👁 Observation Description:</div>
+                          <div class="note-content"><?= htmlspecialchars($r['observation_description']) ?></div>
+                        </div>
+                        
+                        <div class="note-item">
+                          <div class="note-label">🔍 Complete Observation:</div>
+                          <div class="note-content"><?= htmlspecialchars($r['description']) ?></div>
+                        </div>
+                        
+                        <div class="note-item">
+                          <div class="note-label">⚡ Corrective Action:</div>
+                          <div class="note-content"><?= htmlspecialchars($r['operation_corrective']) ?></div>
+                        </div>
+                        
+                        <div class="note-item">
+                          <div class="note-label">👤 Created By:</div>
+                          <div class="note-content"><?= htmlspecialchars($r['username'] ?? 'Legacy Report') ?></div>
+                        </div>
+                        
+                        <div class="note-item">
+                          <div class="note-label">👤 Closed By:</div>
+                          <div class="note-content"><?= $closedBy ?></div>
+                        </div>
+                        
+                        <!-- Closure Notes (only show if observation is closed) -->
+                        <?php if ($r['report_status'] == 1 && !empty($r['closure_notes'])): ?>
+                          <div class="note-item closure">
+                            <div class="note-label">🔒 Closure Notes:</div>
+                            <div class="note-content"><?= htmlspecialchars($r['closure_notes']) ?></div>
+                          </div>
+                        <?php endif; ?>
+                      </div>
+                    </div>
+                  </td>
                 </tr>
               <?php endforeach; ?>
             </tbody>
@@ -460,6 +763,64 @@ $overdueCount = count($overdueReports);
         button.textContent = isHidden
           ? "⚠️ Show Overdue Reports"
           : `⚠️ Hide Overdue Reports — 🔴 ${high} | 🟡 ${medium} | 🟢 ${low}`;
+      }
+
+      // Toggle details functionality for overdue reports
+      function toggleDetails(reportId) {
+        const detailsRow = document.getElementById('details_' + reportId);
+        const button = document.getElementById('btn_' + reportId);
+        
+        if (detailsRow.style.display === 'none' || detailsRow.style.display === '') {
+          detailsRow.style.display = 'table-row';
+          button.textContent = '−';
+          button.classList.add('expanded');
+        } else {
+          detailsRow.style.display = 'none';
+          button.textContent = '+';
+          button.classList.remove('expanded');
+        }
+      }
+      
+      // Send overdue email notification
+      function sendOverdueEmail(reportId) {
+        const button = document.getElementById('email_btn_' + reportId);
+        button.disabled = true;
+        button.textContent = '⏳ Sending...';
+        
+        fetch('submit_button/send_overdue_email.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: 'report_id=' + reportId
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            button.textContent = '✅ Sent!';
+            button.style.backgroundColor = '#4CAF50';
+            setTimeout(() => {
+              button.textContent = '📧 Send Email';
+              button.style.backgroundColor = '';
+              button.disabled = false;
+            }, 3000);
+          } else {
+            alert('Error: ' + (data.message || 'Failed to send email'));
+            button.textContent = '❌ Failed';
+            button.style.backgroundColor = '#f44336';
+            setTimeout(() => {
+              button.textContent = '📧 Send Email';
+              button.style.backgroundColor = '';
+              button.disabled = false;
+            }, 3000);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Network error. Please try again.');
+          button.textContent = '📧 Send Email';
+          button.disabled = false;
+        });
       }
     </script>
 </body>
