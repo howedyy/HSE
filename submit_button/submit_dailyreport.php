@@ -401,7 +401,7 @@ if (
                 $base_url = $protocol . $host;
                 
                 // Create a properly encoded URL
-                $link_url = $base_url . "/dailyreport_overview.php?highlight=" . urlencode($report_id);
+                $link_url = $base_url . "/Edara-HSE111/dailyreport_overview.php?highlight=" . urlencode($report_id);
                 
                 // Create completely plain text message with URL
                 $telegramMsg = "⚠️ HIGH RISK Daily Report Submitted ⚠️\n\n"

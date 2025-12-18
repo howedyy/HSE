@@ -9,7 +9,8 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Filters (No project)
+// Filters
+$selectedProject = $_GET['project'] ?? '';
 $selectedDepartment = $_GET['department'] ?? '';
 $selectedOperation = $_GET['operation'] ?? '';
 
@@ -19,6 +20,16 @@ if (isset($_GET['reset'])) {
 }
 
 $filterConditions = [];
+if ($selectedProject !== '') {
+    // The PTW table stores actual project names, not IDs
+    // Get the project name from the ID
+    $projectQuery = "SELECT project_name FROM project WHERE id = " . intval($selectedProject);
+    $projectResult = $conn->query($projectQuery);
+    if ($projectResult && $projectRow = $projectResult->fetch_assoc()) {
+        $projectName = $projectRow['project_name'];
+        $filterConditions[] = "p.project_name = '" . $conn->real_escape_string($projectName) . "'";
+    }
+}
 if ($selectedDepartment !== '') {
     $filterConditions[] = "p.department = " . intval($selectedDepartment);
 }
@@ -101,6 +112,7 @@ $overdueCount = count($overduePTWs);
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PTW Analysis</title>
   <script src="js/chart.umd.min.js"></script>
 <style>
@@ -140,6 +152,17 @@ $overdueCount = count($overduePTWs);
 <h2>📋 PTW Analysis Dashboard</h2>
 
 <form method="GET" class="filter-form" id="filterForm">
+  <select name="project" onchange="document.getElementById('filterForm').submit();">
+    <option value="">All Projects</option>
+    <?php
+    $projects = $conn->query("SELECT id, project_name FROM project WHERE project_status = 1 ORDER BY project_name");
+    while ($row = $projects->fetch_assoc()) {
+      $sel = ($selectedProject == $row['id']) ? 'selected' : '';
+      echo "<option value='{$row['id']}' $sel>" . htmlspecialchars($row['project_name']) . "</option>";
+    }
+    ?>
+  </select>
+  
   <select name="department" onchange="document.getElementById('filterForm').submit();">
     <option value="">All Departments</option>
     <?php
@@ -150,18 +173,6 @@ $overdueCount = count($overduePTWs);
     }
     ?>
   </select>
-<!--
-   <select name="project" id="projectFilter">
-  <option value="">All Projects</option>
-  </*?php
-  $projects = $conn->query("SELECT id, project_name FROM project WHERE project_status = 1 ORDER BY project_name");
-  while ($row = $projects->fetch_assoc()) {
-    $sel = ($selectedProject == $row['id']) ? 'selected' : '';
-    echo "<option value='{$row['id']}' $sel>" . htmlspecialchars($row['project_name']) . "</option>";
-  }
-  ?>
-</select> 
--->
   <select name="operation" onchange="document.getElementById('filterForm').submit();">
     <option value="">All Operations</option>
     <?php

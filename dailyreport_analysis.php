@@ -184,6 +184,7 @@ $overdueCount = count($overdueReports);
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daily Report Dashboard</title>
   <script src="js/chart.umd.min.js"></script>
   <style>
@@ -455,6 +456,217 @@ $overdueCount = count($overdueReports);
       background-color: #9E9E9E;
       cursor: not-allowed;
     }
+
+    /* ================================================
+       MOBILE RESPONSIVE DESIGN - Media Queries
+       ================================================ */
+    
+    /* Tablet and below (768px) */
+    @media screen and (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
+      h2 {
+        font-size: 20px;
+        margin-top: 60px;
+      }
+
+      .dashboard-wrapper {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .charts-area {
+        min-width: unset;
+        width: 100%;
+      }
+
+      .chart-container {
+        max-width: 100%;
+        padding: 15px;
+        transform: scale(1);
+      }
+
+      .sidebar {
+        width: 100%;
+        padding: 15px;
+      }
+
+      /* Make table scrollable horizontally on mobile */
+      .sidebar {
+        overflow-x: auto;
+      }
+
+      table {
+        min-width: 700px; /* Ensure table doesn't get too compressed */
+        font-size: 11px;
+      }
+
+      th, td {
+        padding: 4px 3px;
+        font-size: 10px;
+      }
+
+      .toggle-button {
+        font-size: 14px;
+        padding: 8px 12px;
+      }
+
+      .filter-form {
+        margin: 15px auto;
+      }
+
+      .filter-form label {
+        display: block;
+        margin-bottom: 10px;
+      }
+
+      .filter-form select {
+        width: 100%;
+        max-width: 300px;
+        padding: 8px;
+        margin: 5px 0;
+      }
+    }
+
+    /* Mobile phones (480px and below) */
+    @media screen and (max-width: 480px) {
+      body {
+        padding: 5px;
+      }
+
+      h2 {
+        font-size: 18px;
+        margin-top: 50px;
+        padding: 0 5px;
+      }
+
+      .chart-container {
+        padding: 10px;
+        margin-bottom: 15px;
+      }
+
+      .sidebar {
+        padding: 10px;
+      }
+
+      .toggle-button {
+        font-size: 12px;
+        padding: 6px 10px;
+      }
+
+      .alert-box {
+        font-size: 13px;
+        padding: 10px;
+      }
+
+      table {
+        font-size: 9px;
+        min-width: 650px;
+      }
+
+      th, td {
+        padding: 3px 2px;
+        font-size: 9px;
+      }
+
+      .expand-btn {
+        padding: 3px 6px;
+        font-size: 12px;
+      }
+
+      .email-btn {
+        padding: 3px 6px;
+        font-size: 9px;
+      }
+
+      /* Make details view more mobile-friendly */
+      .details-content {
+        flex-direction: column;
+        padding: 10px;
+      }
+
+      .details-images {
+        flex: 1;
+        width: 100%;
+      }
+
+      .image-section img {
+        max-width: 120px;
+        max-height: 150px;
+      }
+
+      .details-notes {
+        padding: 10px;
+      }
+
+      .note-item {
+        padding: 8px;
+        margin-bottom: 10px;
+      }
+
+      .note-label {
+        font-size: 11px;
+      }
+
+      .note-content {
+        font-size: 11px;
+      }
+
+      .details-notes h4 {
+        font-size: 13px;
+      }
+
+      .image-section h5 {
+        font-size: 11px;
+      }
+
+      .no-image {
+        font-size: 11px;
+        padding: 10px;
+      }
+
+      .filter-form select {
+        width: 100%;
+        max-width: 100%;
+      }
+    }
+
+    /* Extra small devices (360px and below) */
+    @media screen and (max-width: 360px) {
+      h2 {
+        font-size: 16px;
+      }
+
+      .toggle-button {
+        font-size: 11px;
+        padding: 5px 8px;
+        white-space: normal;
+        line-height: 1.3;
+      }
+
+      table {
+        min-width: 600px;
+      }
+
+      th, td {
+        font-size: 8px;
+        padding: 2px 1px;
+      }
+
+      .expand-btn,
+      .email-btn {
+        font-size: 8px;
+        padding: 2px 4px;
+      }
+
+      .image-section img {
+        max-width: 100px;
+        max-height: 120px;
+      }
+    }
+  
   </style>
 </head>
 

@@ -91,7 +91,7 @@ $status = $report['closed_at'] ? 'Closed (Late)' : 'Still Open';
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
 $host = $_SERVER['HTTP_HOST'];
 $base_url = $protocol . $host;
-$link_url = $base_url . "/dailyreport_overview.php?highlight=" . urlencode($report_id);
+$link_url = $base_url . "/Edara-HSE111/dailyreport_overview.php?highlight=" . urlencode($report_id);
 
 $emailSubject = "⚠️ OVERDUE REPORT - " . $report['project_name'] . " (ID: #" . $report_id . ")";
 $emailBody = "

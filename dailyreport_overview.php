@@ -12,6 +12,7 @@ $selectedRisk = $_GET['risk'] ?? '';
 $startDate = $_GET['startDate'] ?? '';
 $endDate = $_GET['endDate'] ?? '';
 $entries = $_GET['entries'] ?? '10';
+$highlightReportId = $_GET['highlight'] ?? ''; // Capture highlight parameter
 
 // Dynamic pagination settings based on entries selection
 $currentPage = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
@@ -792,6 +793,26 @@ if (!$result) {
         font-size: 16px;
       }
     }
+
+    /* Highlight row styling */
+    tr.highlight-row {
+      background-color: #fff3cd !important;
+      animation: pulse-highlight 2s ease-in-out 3;
+      border: 2px solid #ffc107 !important;
+    }
+
+    tr.highlight-row td {
+      background-color: #fff3cd !important;
+    }
+
+    @keyframes pulse-highlight {
+      0%, 100% {
+        background-color: #fff3cd;
+      }
+      50% {
+        background-color: #ffe082;
+      }
+    }
   </style>
 </head>
 <body>
@@ -909,11 +930,15 @@ if (!$result) {
         $disabled = ($row['report_status'] == 1) ? "disabled" : "";
         $closedAt = ($row['closed_at']) ? date("Y-m-d H:i", strtotime($row['closed_at'])) : "—";
         $closedBy = ($row['closed_by_username']) ? htmlspecialchars($row['closed_by_username']) : "—";
+        
+        // Check if this row should be highlighted
+        $highlightClass = ($highlightReportId && $report_id == $highlightReportId) ? ' highlight-row' : '';
         ?>
           <tr id="row_<?= $report_id ?>" 
+              class="<?= $highlightClass ?>"
               data-image="<?= htmlspecialchars($row['image_upload']) ?>"
               data-closure-image="<?= htmlspecialchars($row['closure_image']) ?>"
-              data-closure-notes="<?= htmlspecialchars($row['closure_notes']) ?>">
+              data-closure-notes="<?= htmlspecialchars($row['closure_notes']) ?>">>
           <td>
             <button class="expand-btn" onclick="toggleDetails(<?= $report_id ?>)" id="btn_<?= $report_id ?>">+</button>
           </td>
