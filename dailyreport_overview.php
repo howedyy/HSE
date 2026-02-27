@@ -9,6 +9,7 @@ $selectedProject = $_GET['project'] ?? '';
 $selectedDepartment = $_GET['department'] ?? '';
 $selectedCreatedBy = $_GET['created_by'] ?? '';
 $selectedRisk = $_GET['risk'] ?? '';
+$selectedStatus = $_GET['status'] ?? '';
 $startDate = $_GET['startDate'] ?? '';
 $endDate = $_GET['endDate'] ?? '';
 $entries = $_GET['entries'] ?? '10';
@@ -39,6 +40,9 @@ if ($selectedCreatedBy !== '') {
 }
 if ($selectedRisk !== '') {
     $filterConditions[] = "dr.risk = '" . $conn->real_escape_string($selectedRisk) . "'";
+}
+if ($selectedStatus !== '') {
+    $filterConditions[] = "dr.report_status = " . intval($selectedStatus);
 }
 if ($startDate !== '') {
     $filterConditions[] = "dr.date >= '" . $conn->real_escape_string($startDate) . " 00:00:00'";
@@ -90,6 +94,8 @@ $sql = "
     dr.closure_notes,
     dr.closure_image,
     dr.closed_by,
+    dr.email_sent,
+    dr.email_sent_at,
     u.username,
     u2.username as closed_by_username
   FROM daily_report dr
@@ -813,6 +819,352 @@ if (!$result) {
         background-color: #ffe082;
       }
     }
+
+    /* Observation Comments Styling */
+    .comments-section {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #dee2e6;
+    }
+
+    .comments-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #007bff;
+    }
+
+    .comments-header h4 {
+      margin: 0;
+      color: #333;
+      font-size: 18px;
+    }
+
+    .add-comment-btn {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.3s;
+    }
+
+    .add-comment-btn:hover {
+      background: #0056b3;
+    }
+
+    .comments-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .comment-item {
+      background: white;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+      border-left: 2px solid #007bff;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .comment-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .comment-author {
+      font-weight: 600;
+      color: #007bff;
+    }
+
+    .comment-time {
+      font-style: italic;
+    }
+
+    .comment-text {
+      color: #333;
+      line-height: 1.6;
+      margin-bottom: 8px;
+      word-wrap: break-word;
+    }
+
+    .comment-images {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      padding: 5px 0;
+    }
+
+    .comment-img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid #dee2e6;
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: zoom-in;
+    }
+
+    .comment-img:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .comment-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .comment-btn {
+      padding: 4px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.3s;
+    }
+
+    .comment-edit-btn {
+      background: #ffc107;
+      color: #333;
+    }
+
+    .comment-edit-btn:hover {
+      background: #e0a800;
+    }
+
+    .comment-delete-btn {
+      background: #dc3545;
+      color: white;
+    }
+
+    .comment-delete-btn:hover {
+      background: #c82333;
+    }
+
+    .no-comments {
+      text-align: center;
+      color: #999;
+      font-style: italic;
+      padding: 20px;
+    }
+
+    /* Comment Modal Styling */
+    .comment-modal {
+      display: none;
+      position: fixed;
+      z-index: 1001;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+
+    .comment-modal-content {
+      background-color: #fefefe;
+      margin: 8% auto;
+      padding: 25px;
+      border: none;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .comment-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #eee;
+    }
+
+    .comment-modal-header h3 {
+      margin: 0;
+      color: #333;
+    }
+
+    .comment-close-btn {
+      background: none;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+      color: #999;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .comment-close-btn:hover {
+      color: #333;
+    }
+
+    .comment-form-group {
+      margin-bottom: 20px;
+    }
+
+    .comment-form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #555;
+    }
+
+    .comment-form-group textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      resize: vertical;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .comment-form-group textarea:focus {
+      border-color: #007bff;
+      outline: none;
+    }
+
+    .comment-modal-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    .comment-modal-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.3s;
+    }
+
+    .comment-modal-btn-cancel {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .comment-modal-btn-cancel:hover {
+      background-color: #5a6268;
+    }
+
+    .comment-modal-btn-submit {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .comment-modal-btn-submit:hover {
+      background-color: #0056b3;
+    }
+
+    /* Loading state for comments */
+    .comments-loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+    /* Action Buttons Container */
+    .action-buttons-container {
+      display: flex;
+      gap: 5px;
+      justify-content: flex-start;
+      align-items: center;
+    }
+
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 4px 8px;
+      border-radius: 3px;
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      line-height: 1;
+    }
+
+    .action-icon {
+      font-size: 12px;
+    }
+
+    .btn-edit {
+      background-color: #ffc107;
+      color: #212529;
+    }
+
+    .btn-edit:hover {
+      background-color: #e0a800;
+      color: #212529;
+    }
+
+    .btn-comment {
+      background-color: #17a2b8;
+      color: white !important;
+    }
+
+    .btn-comment:hover {
+      background-color: #138496;
+    }
+
+    .btn-delete {
+      background-color: #dc3545;
+      color: white !important;
+    }
+
+    .btn-delete:hover {
+      background-color: #c82333;
+    }
+
+    .close-btn {
+      background-color: #6c757d;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 3px;
+      border: none;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      transition: all 0.2s ease;
+      line-height: 1;
+      height: fit-content;
+    }
+
+    .close-btn:hover {
+      background-color: #5a6268;
+    }
+
+    .close-btn:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
   </style>
 </head>
 <body>
@@ -881,6 +1233,12 @@ if (!$result) {
       <option value="منخفضة" <?= $selectedRisk == 'منخفضة' ? 'selected' : '' ?>>منخفضة (Low)</option>
     </select>
 
+    <select name="status" id="statusFilter">
+      <option value="">All Statuses</option>
+      <option value="0" <?= $selectedStatus === '0' ? 'selected' : '' ?>>Open</option>
+      <option value="1" <?= $selectedStatus === '1' ? 'selected' : '' ?>>Closed</option>
+    </select>
+
     <select name="entries" id="entriesFilter">
       <option value="5" <?= $entries == '5' ? 'selected' : '' ?>>5</option>
       <option value="10" <?= $entries == '10' ? 'selected' : '' ?>>10</option>
@@ -895,9 +1253,11 @@ if (!$result) {
     </div>
   </form>
   
-  <form method="post" action="export_daily_report_all.php" class="export-form">
-    <button type="submit" class="export-excel-btn">📥 Export All Reports to Excel</button>
-  </form>
+  <?php if (hasAccess('dailyreport_overview.php', 'export_excel') || hasAccess('dailyreport_overview.php', 'export') || hasAccess('dailyreport_overview.php', 'view')): ?>
+    <form method="post" action="export_daily_report_all.php" class="export-form">
+      <button type="submit" class="export-excel-btn">📥 Export All Reports to Excel</button>
+    </form>
+  <?php endif; ?>
 
   <div class="data-container">
     <table class="styled-table_1">
@@ -917,6 +1277,7 @@ if (!$result) {
           <th>Status</th>
           <th>Closed At</th>
           <th>Closed By</th>
+          <th>Email</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -938,7 +1299,7 @@ if (!$result) {
               class="<?= $highlightClass ?>"
               data-image="<?= htmlspecialchars($row['image_upload']) ?>"
               data-closure-image="<?= htmlspecialchars($row['closure_image']) ?>"
-              data-closure-notes="<?= htmlspecialchars($row['closure_notes']) ?>">>
+              data-closure-notes="<?= htmlspecialchars($row['closure_notes']) ?>">
           <td>
             <button class="expand-btn" onclick="toggleDetails(<?= $report_id ?>)" id="btn_<?= $report_id ?>">+</button>
           </td>
@@ -956,9 +1317,28 @@ if (!$result) {
           <td id="closedAt_<?= $report_id ?>"><?= $closedAt ?></td>
           <td id="closedBy_<?= $report_id ?>"><?= $closedBy ?></td>
           <td>
-            <?php if (hasAccess('dailyreport_overview.php', 'submit')): ?>
-              <button class='close-btn' onclick='openCloseModal(<?= $report_id ?>)' <?= $disabled ?>>Close</button>
-            <?php endif; ?>
+             <?php if (hasAccess('dailyreport_overview.php', 'send_email')): ?>
+               <?php if ($row['email_sent'] == 1): ?>
+                  <button class="expand-btn" style="background-color: #6c757d; width: auto; font-size: 12px; cursor: not-allowed;" disabled>✅ Mail Sent</button>
+               <?php else: ?>
+                  <button onclick="sendObservationEmail(<?= $report_id ?>)" class="expand-btn email-send-btn" id="email_btn_<?= $report_id ?>" style="background-color: #007bff; width: auto; font-size: 12px;">✉️ Send</button>
+               <?php endif; ?>
+             <?php endif; ?>
+          </td>
+          <td>
+            <div class="action-buttons-container">
+              <?php if (hasAccess('dailyreport_overview.php', 'submit')): ?>
+                <button class='close-btn' onclick='openCloseModal(<?= $report_id ?>)' <?= $disabled ?>>
+                  <i class="action-icon">🔒</i> Close
+                </button>
+              <?php endif; ?>
+              
+              <?php if (hasAccess('dailyreport_overview.php', 'delete')): ?>
+                <button class="btn-action btn-delete" onclick="if(confirm('Are you sure you want to delete this observation?')) window.location.href='delete_observation.php?id=<?= $report_id ?>'" title="Delete Observation">
+                  <i class="action-icon">🗑️</i> Delete
+                </button>
+              <?php endif; ?>
+            </div>
           </td>
         </tr>
         
@@ -1038,6 +1418,19 @@ if (!$result) {
                     <div class="note-content"><?= htmlspecialchars($row['closure_notes']) ?></div>
                   </div>
                 <?php endif; ?>
+                
+                <!-- Observation Comments Section -->
+                <div class="comments-section">
+                  <div class="comments-header">
+                    <h4>💬 Observation Comments</h4>
+                    <?php if (hasAccess('dailyreport_overview.php', 'add_comment')): ?>
+                      <button class="add-comment-btn" onclick="openCommentModal(<?= $report_id ?>)">➕ Add Comment</button>
+                    <?php endif; ?>
+                  </div>
+                  <div class="comments-list" id="comments_list_<?= $report_id ?>">
+                    <div class="comments-loading">Loading comments...</div>
+                  </div>
+                </div>
               </div>
             </div>
           </td>
@@ -1183,6 +1576,38 @@ if (!$result) {
       <div class="modal-buttons">
         <button type="button" class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancel</button>
         <button type="submit" class="modal-btn modal-btn-submit">Close Observation</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Comment Modal -->
+<div id="commentModal" class="comment-modal">
+  <div class="comment-modal-content">
+    <div class="comment-modal-header">
+      <h3 id="commentModalTitle">💬 Add Comment</h3>
+      <button class="comment-close-btn" onclick="closeCommentModal()">&times;</button>
+    </div>
+    
+    <form id="commentForm" enctype="multipart/form-data">
+      <input type="hidden" id="commentReportId" name="report_id" value="">
+      <input type="hidden" id="commentId" name="comment_id" value="">
+      <input type="hidden" id="commentMode" value="add">
+      
+      <div class="comment-form-group">
+        <label for="commentText">💭 Your Comment *</label>
+        <textarea id="commentText" name="comment_text" placeholder="Share your thoughts, observations, or suggestions..." required></textarea>
+      </div>
+
+      <div class="comment-form-group">
+        <label for="commentImage">📷 Attachment (Optional)</label>
+        <input type="file" id="commentImage" name="comment_image[]" accept="image/*" multiple>
+        <small style="color: #666; display: block; margin-top: 5px;">Upload images (JPG, PNG max 10MB each, up to 10 files)</small>
+      </div>
+      
+      <div class="comment-modal-buttons">
+        <button type="button" class="comment-modal-btn comment-modal-btn-cancel" onclick="closeCommentModal()">Cancel</button>
+        <button type="submit" class="comment-modal-btn comment-modal-btn-submit" id="commentSubmitBtn">Add Comment</button>
       </div>
     </form>
   </div>
@@ -1489,6 +1914,274 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 });
+
+// Function to show notification toast
+function showNotification(message, type = 'success') {
+    // Remove any existing notifications
+    const existingNotification = document.querySelector('.email-notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = 'email-notification';
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 20px 30px;
+        background: ${type === 'success' ? 'linear-gradient(135deg, #28a745, #20c997)' : 'linear-gradient(135deg, #dc3545, #c82333)'};
+        color: white;
+        border-radius: 10px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        z-index: 10000;
+        font-size: 16px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: slideInRight 0.5s ease, fadeOut 0.5s ease 4.5s;
+        max-width: 400px;
+        word-wrap: break-word;
+    `;
+
+    // Add icon based on type
+    const icon = type === 'success' ? '✅' : '❌';
+    notification.innerHTML = `
+        <span style="font-size: 24px;">${icon}</span>
+        <span>${message}</span>
+    `;
+
+    // Add animation styles if not already present
+    if (!document.querySelector('#notification-animations')) {
+        const style = document.createElement('style');
+        style.id = 'notification-animations';
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes fadeOut {
+                from {
+                    opacity: 1;
+                }
+                to {
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    document.body.appendChild(notification);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+function sendObservationEmail(reportId) {
+    if (!confirm('Are you sure you want to send the observation report via email?')) {
+        return;
+    }
+
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '⏳...';
+    btn.disabled = true;
+
+    const formData = new FormData();
+    formData.append('report_id', reportId);
+
+    fetch('submit_button/send_observation_email.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Mail has been sent successfully!', 'success');
+            // Permanently update button to "Mail Sent" state
+            btn.innerHTML = '✅ Mail Sent';
+            btn.style.backgroundColor = '#6c757d';
+            btn.style.cursor = 'not-allowed';
+            btn.disabled = true;
+            btn.onclick = null; // Remove click handler
+        } else {
+            showNotification('Error: ' + data.message, 'error');
+            // Re-enable button on error
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Network error occurred. Please try again.', 'error');
+        // Re-enable button on error
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+// ==================== COMMENT MANAGEMENT FUNCTIONS ====================
+
+// Load comments for a specific report
+function loadComments(reportId) {
+  const commentsList = document.getElementById('comments_list_' + reportId);
+  
+  fetch('get_observation_comments.php?report_id=' + reportId)
+    .then(response => response.text())
+    .then(html => {
+      commentsList.innerHTML = html;
+    })
+    .catch(error => {
+      console.error('Error loading comments:', error);
+      commentsList.innerHTML = '<div class="no-comments">Error loading comments. Please try again.</div>';
+    });
+}
+
+// Open comment modal for adding a new comment
+function openCommentModal(reportId) {
+  document.getElementById('commentReportId').value = reportId;
+  document.getElementById('commentId').value = '';
+  document.getElementById('commentMode').value = 'add';
+  document.getElementById('commentText').value = '';
+  document.getElementById('commentModalTitle').textContent = '💬 Add Comment';
+  document.getElementById('commentSubmitBtn').textContent = 'Add Comment';
+  document.getElementById('commentModal').style.display = 'block';
+}
+
+// Open comment modal for editing an existing comment
+function editComment(commentId, reportId) {
+  // Get the comment text from the DOM
+  const commentTextElement = document.getElementById('comment-text-' + commentId);
+  const commentText = commentTextElement.innerText;
+  
+  document.getElementById('commentReportId').value = reportId;
+  document.getElementById('commentId').value = commentId;
+  document.getElementById('commentMode').value = 'edit';
+  document.getElementById('commentText').value = commentText;
+  document.getElementById('commentModalTitle').textContent = '✏️ Edit Comment';
+  document.getElementById('commentSubmitBtn').textContent = 'Update Comment';
+  document.getElementById('commentModal').style.display = 'block';
+}
+
+// Close comment modal
+function closeCommentModal() {
+  document.getElementById('commentModal').style.display = 'none';
+  document.getElementById('commentText').value = '';
+  document.getElementById('commentId').value = '';
+  document.getElementById('commentMode').value = 'add';
+  const commentImage = document.getElementById('commentImage');
+  if (commentImage) commentImage.value = '';
+}
+
+// Delete a comment
+function deleteComment(commentId, reportId) {
+  if (!confirm('Are you sure you want to delete this comment? This action cannot be undone.')) {
+    return;
+  }
+  
+  const formData = new FormData();
+  formData.append('comment_id', commentId);
+  
+  fetch('delete_observation_comment.php', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification('Comment deleted successfully!', 'success');
+      loadComments(reportId);
+    } else {
+      showNotification('Error: ' + data.message, 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showNotification('Network error occurred. Please try again.', 'error');
+  });
+}
+
+// Handle comment form submission
+document.getElementById('commentForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const mode = document.getElementById('commentMode').value;
+  const reportId = document.getElementById('commentReportId').value;
+  const commentText = document.getElementById('commentText').value.trim();
+  const submitBtn = document.getElementById('commentSubmitBtn');
+  const originalText = submitBtn.textContent;
+  
+  if (!commentText) {
+    showNotification('Please enter a comment', 'error');
+    return;
+  }
+  
+  // Add loading state
+  submitBtn.textContent = mode === 'add' ? 'Adding...' : 'Updating...';
+  submitBtn.disabled = true;
+  
+  const formData = new FormData(this);
+  const url = mode === 'add' ? 'add_observation_comment.php' : 'edit_observation_comment.php';
+  
+  fetch(url, {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification(data.message, 'success');
+      closeCommentModal();
+      loadComments(reportId);
+    } else {
+      showNotification('Error: ' + data.message, 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showNotification('Network error occurred. Please try again.', 'error');
+  })
+  .finally(() => {
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+  });
+});
+
+// Close comment modal when clicking outside of it
+window.addEventListener('click', function(event) {
+  const commentModal = document.getElementById('commentModal');
+  if (event.target === commentModal) {
+    closeCommentModal();
+  }
+});
+
+// Update toggleDetails function to load comments when expanding
+const originalToggleDetails = toggleDetails;
+toggleDetails = function(reportId) {
+  const detailsRow = document.getElementById('details_' + reportId);
+  const isCurrentlyHidden = detailsRow.style.display === 'none' || detailsRow.style.display === '';
+  
+  // Call original toggle function
+  originalToggleDetails(reportId);
+  
+  // If we're expanding (showing) the details, load comments
+  if (isCurrentlyHidden) {
+    loadComments(reportId);
+  }
+};
 </script>
 
 

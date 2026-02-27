@@ -208,7 +208,14 @@ $overdueCount = count($overduePTWs);
 
   <div class="sidebar">
     <h3>⚠️ Overdue PTWs (<?= $overdueCount ?>)</h3>
-      <button class="toggle-button" onclick="toggleSidebar()">⚠️ Overdue Reports</button>
+      <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px;">
+        <button class="toggle-button" onclick="toggleSidebar()">Detailed List</button>
+        <?php if (hasAccess('ptw_analysis.php', 'export_excel') || hasAccess('ptw_analysis.php', 'export') || hasAccess('ptw_analysis.php', 'view')): ?>
+          <a href="export_ptw_overdue_excel.php?project=<?= urlencode($selectedProject) ?>&department=<?= urlencode($selectedDepartment) ?>&operation=<?= urlencode($selectedOperation) ?>" class="toggle-button" style="text-decoration: none; background: #28a745; color: white; display: inline-block;">
+             📥 Export to Excel
+          </a>
+        <?php endif; ?>
+      </div>
 
     <?php if ($overdueCount > 0): ?>
       <div class="alert-box">PTWs not finished and scheduled before today:</div>

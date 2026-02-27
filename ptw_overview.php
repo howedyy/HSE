@@ -82,7 +82,41 @@ if ($selectedDepartment !== '') {
     $filterConditions[] = "p.department = " . intval($selectedDepartment);
 }
 
+$statusFilter = $_GET['status'] ?? '';
+if ($statusFilter !== '') {
+    $filterConditions[] = "p.ptw_status = " . intval($statusFilter);
+}
+
 $whereClause = count($filterConditions) ? 'WHERE ' . implode(' AND ', $filterConditions) : '';
+
+// Dynamic pagination settings based on entries selection
+$currentPage = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+
+if ($entries == 'all') {
+    $recordsPerPage = 30; // Show 30 records per page when "Show All" is selected
+} else {
+    $recordsPerPage = intval($entries);
+}
+
+$offset = ($currentPage - 1) * $recordsPerPage;
+
+// First, count total records for pagination
+$countSql = "
+    SELECT COUNT(*) as total
+    FROM PTW p
+    LEFT JOIN department d ON p.department = d.id
+    $whereClause
+";
+
+$countResult = $conn->query($countSql);
+if (!$countResult) {
+    die("Count query failed: " . $conn->error);
+}
+$totalRecords = $countResult->fetch_assoc()['total'];
+
+// Calculate pagination for all cases
+$totalPages = ceil($totalRecords / $recordsPerPage);
+$limitClause = "LIMIT $recordsPerPage OFFSET $offset";
 
 // Use uppercase PTW table name to match actual database table
 $sql = "
@@ -91,6 +125,7 @@ $sql = "
     LEFT JOIN department d ON p.department = d.id
     $whereClause
     ORDER BY p.id DESC
+    $limitClause
 ";
 
 // Check if PTW table exists
@@ -175,6 +210,15 @@ $result = $conn->query($sql);
     }
     .btn-pdf:hover {
       background: linear-gradient(135deg, #C62828, #d32f2f) !important;
+      transform: translateY(-2px) !important;
+    }
+
+    .btn-delete {
+      background: linear-gradient(135deg, #f44336, #e57373) !important; /* Red gradient for delete */
+      color: white !important;
+    }
+    .btn-delete:hover {
+      background: linear-gradient(135deg, #d32f2f, #ef5350) !important;
       transform: translateY(-2px) !important;
     }
 
@@ -278,11 +322,32 @@ $result = $conn->query($sql);
       background: #616161;
     }
 
+    /* Container and layout */
+    .container {
+      width: 100% !important;
+      max-width: 100% !important;
+      display: block !important;
+    }
+
     /* Table styles */
+    .data-container {
+      display: block !important;
+      width: 100% !important;
+      clear: both !important;
+      position: relative !important;
+    }
+
     .styled-table_1 {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
+      border-radius: 8px !important;
+      margin-bottom: 0 !important;
+      display: table !important;
+      clear: both !important;
+      float: none !important;
+      position: relative !important;
+      z-index: 1 !important;
     }
     .styled-table_1 th, .styled-table_1 td {
       padding: 12px;
@@ -387,6 +452,370 @@ $result = $conn->query($sql);
       line-height: 1.6;
       color: #333;
     }
+
+    /* Modern Table Pagination Styles - Matching dailyreport_overview.php */
+    /* Force pagination to new line after table */
+    .styled-table_1 + div,
+    .styled-table_1 + * {
+      clear: both !important;
+      display: block !important;
+    }
+
+    .table-pagination {
+      background: #99999f !important;
+      border-radius: 8px !important;
+      padding: 20px !important;
+      margin: 20px auto 0 auto !important;
+      width: 95% !important;
+      max-width: 1200px !important;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 15px !important;
+      justify-content: center !important;
+      align-items: center !important;
+      position: static !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      height: auto !important;
+      clear: both !important;
+      float: none !important;
+      box-sizing: border-box !important;
+    }
+
+    /* Force line break before pagination */
+    .table-pagination::before {
+      content: "" !important;
+      display: block !important;
+      width: 100% !important;
+      height: 0 !important;
+      clear: both !important;
+    }
+
+    .table-pagination.simple {
+      background: #27ae60;
+      justify-content: center;
+    }
+
+    .pagination-info {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 8px !important;
+      align-items: center !important;
+      padding: 12px 20px !important;
+      border-radius: 6px !important;
+      min-width: 200px !important;
+    }
+
+    .page-indicator {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center !important;
+      gap: 8px;
+      color: #333;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .page-text {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .page-current {
+      background: #007bff;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: bold;
+      min-width: 30px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .page-divider {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .page-total {
+      color: #333;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .records-info {
+      color: #666;
+      font-size: 12px;
+      text-align: center !important;
+      display: block !important;
+    }
+
+    .records-info strong {
+      color: #333;
+      font-weight: 600;
+    }
+
+    .pagination-nav {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 10px !important;
+      flex-wrap: wrap !important;
+    }
+
+    .nav-btn {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px !important;
+      background: #0b2eda !important;
+      border: 1px solid #ccc !important;
+      border-radius: 4px !important;
+      color: white !important;
+      text-decoration: none !important;
+      font-size: 14px !important;
+      font-weight: 500 !important;
+      min-width: 40px !important;
+      height: auto !important;
+      transition: background-color 0.3s ease !important;
+      cursor: pointer !important;
+    }
+
+    .nav-btn:hover {
+      background: #0e0258 !important;
+      color: white !important;
+      text-decoration: none !important;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    .nav-btn.first-btn,
+    .nav-btn.last-btn {
+      background: #007bff !important;
+      border-color: #007bff !important;
+    }
+
+    .nav-btn.first-btn:hover,
+    .nav-btn.last-btn:hover {
+      background: #0056b3 !important;
+    }
+
+    .nav-icon {
+      font-size: 16px;
+      font-style: normal;
+    }
+
+    .page-numbers {
+      display: inline-flex !important;
+      align-items: center;
+      gap: 6px;
+      margin: 0 10px;
+    }
+
+    .page-num {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      height: 32px;
+      padding: 6px 8px !important;
+      background: white !important;
+      border: 2px solid #007bff !important;
+      border-radius: 4px !important;
+      color: #007bff !important;
+      text-decoration: none !important;
+      font-size: 13px !important;
+      font-weight: 500 !important;
+      transition: all 0.3s ease !important;
+    }
+
+    .page-num:hover {
+      background: #007bff !important;
+      color: white !important;
+      text-decoration: none !important;
+      border-color: #007bff !important;
+    }
+
+    .page-num.active {
+      background: #007bff !important;
+      border-color: #007bff !important;
+      color: white !important;
+      font-weight: bold !important;
+    }
+
+    /* Disabled navigation button styling */
+    .nav-btn.disabled {
+      background: #aeb0b2 !important;
+      color: #fff !important;
+      cursor: not-allowed !important;
+      pointer-events: none !important;
+    }
+
+    .nav-btn.disabled:hover {
+      background: #aeb0b2 !important;
+      color: #fff !important;
+    }
+
+    /* Simple footer for "Show All" */
+    .simple-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: white;
+      font-size: 16px;
+      font-weight: 500;
+      background: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      border: 2px solid #27ae60;
+    }
+
+    .simple-info .info-icon {
+      font-size: 18px;
+    }
+
+    .simple-info {
+      color: #333 !important;
+    }
+
+    .simple-info strong {
+      color: #27ae60 !important;
+      font-weight: 600;
+    }
+
+    /* Mobile responsive styles */
+    @media (max-width: 768px) {
+      .table-pagination {
+        width: 95% !important;
+        padding: 15px !important;
+        flex-direction: column !important;
+        gap: 15px !important;
+      }
+
+      .page-indicator {
+        font-size: 16px;
+      }
+
+      .page-current {
+        padding: 5px 10px;
+        font-size: 14px;
+      }
+
+      .records-info {
+        font-size: 13px;
+      }
+
+      .pagination-nav {
+        gap: 6px;
+      }
+
+      .nav-btn {
+        width: 36px;
+        height: 36px;
+      }
+
+      .nav-icon {
+        font-size: 14px;
+      }
+
+      .page-numbers {
+        margin: 0 10px;
+        gap: 4px;
+      }
+
+      .page-num {
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+      }
+
+      .simple-info {
+        font-size: 15px;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .table-pagination {
+        width: 98%;
+        padding: 18px 12px;
+        gap: 15px;
+        border-radius: 0 0 8px 8px;
+      }
+
+      .page-indicator {
+        font-size: 14px;
+        gap: 6px;
+      }
+
+      .page-text,
+      .page-divider {
+        font-size: 13px;
+      }
+
+      .page-current {
+        padding: 4px 8px;
+        font-size: 13px;
+        min-width: 32px;
+      }
+
+      .records-info {
+        font-size: 12px;
+      }
+
+      .nav-btn {
+        width: 32px;
+        height: 32px;
+      }
+
+      .nav-icon {
+        font-size: 12px;
+      }
+
+      .page-numbers {
+        margin: 0 8px;
+        gap: 3px;
+      }
+
+      .page-num {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+      }
+
+      .simple-info {
+        font-size: 14px;
+        gap: 8px;
+      }
+
+      .simple-info .info-icon {
+        font-size: 16px;
+      }
+    }
+    .export-excel-btn {
+      display: inline-block;
+      background-color: #28a745;
+      color: white;
+      padding: 10px 20px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+      margin-top: 10px;
+      margin-bottom: 20px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    .export-excel-btn:hover {
+      background-color: #218838;
+    }
+    .export-form {
+        text-align: right;
+        width: 100%; /* Ensure it takes full width for alignment */
+        margin-bottom: 10px;
+    }
     </style>
 </head>
 
@@ -438,6 +867,16 @@ $result = $conn->query($sql);
       }
       ?>
     </select>
+    
+    <select name="status" id="statusFilter" class="date-input">
+      <option value="">All Statuses</option>
+      <option value="1" <?= $statusFilter === '1' ? 'selected' : '' ?>>✅ Approved</option>
+      <option value="0" <?= $statusFilter === '0' ? 'selected' : '' ?>>⏳ Not Approved</option>
+      <option value="2" <?= $statusFilter === '2' ? 'selected' : '' ?>>✔ Finished</option>
+      <option value="3" <?= $statusFilter === '3' ? 'selected' : '' ?>>❌ Not Completed</option>
+      <option value="4" <?= $statusFilter === '4' ? 'selected' : '' ?>>⚠️ Non Compliance</option>
+    </select>
+    
     <select name="entries" id="entriesFilter" class="date-input">
       <option value="all" <?= $entries == 'all' ? 'selected' : '' ?>>Show All</option>
       <option value="5" <?= $entries == '5' ? 'selected' : '' ?>>5</option>
@@ -470,6 +909,12 @@ $result = $conn->query($sql);
     </script>
   </form>
 
+  <?php if (hasAccess('ptw_overview.php', 'export_excel') || hasAccess('ptw_overview.php', 'export') || hasAccess('ptw_overview.php', 'view')): ?>
+  <form method="post" action="export_ptw_overview_excel.php" class="export-form">
+    <button type="submit" class="export-excel-btn">📥 Export All PTW to Excel</button>
+  </form>
+  <?php endif; ?>
+
   <div class="data-container">
     <table class="styled-table_1">
       <thead>
@@ -491,12 +936,8 @@ $result = $conn->query($sql);
       </thead>
       <tbody>
       <?php
-      $rowCount = 0;
-      $maxRows = ($entries === 'all') ? PHP_INT_MAX : intval($entries);
-
       if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
-          if (++$rowCount > $maxRows) break;
 
           $permit = htmlspecialchars($row['permit_number']);
           $status = (int)$row['ptw_status'];
@@ -560,6 +1001,11 @@ $result = $conn->query($sql);
             echo "<a href='noncompliance_ptw.php?permit_number={$permit}&action=noncompliance' class='btn-action btn-warning' 
                    id='noncompliance_{$permit}' onclick='disableLink(\"noncompliance_{$permit}\");' {$nonComplianceDisabled}><i class='action-icon'>⚠️</i> Non Compliance</a>";
           }
+
+          if (hasAccess('ptw_overview.php', 'delete')) { 
+             echo "<a href='delete_ptw.php?permit_number={$permit}' class='btn-action btn-delete' 
+                    onclick='return confirm(\"Are you sure you want to delete this PTW permanently?\");'><i class='action-icon'>🗑️</i> Delete</a>";
+          }
           echo "</div>";
           echo "</td>";
           echo "</tr>";
@@ -573,7 +1019,7 @@ $result = $conn->query($sql);
           echo "</div>";
           echo "</div>";
           echo "<div class='details-images'>";
-          echo "<h4>📷 Non-Compliance Images</h4>";
+          echo "<h4>📷 Attached Images</h4>";
           echo "<div class='image-section' id='images_content_{$permit}'>";
           echo "<p>Loading images...</p>";
           echo "</div>";
@@ -588,10 +1034,130 @@ $result = $conn->query($sql);
       ?>
     </tbody>
   </table>
+
+<!-- Force line break and pagination below table -->
+<div style="clear: both; width: 100%; height: 1px; display: block;"></div>
+
+<!-- Modern Pagination Under Table -->
+<?php if ($totalPages > 1): ?>
+<div class="table-pagination" style="display: block !important; width: 100% !important; clear: both !important; float: none !important; position: relative !important; margin-top: 20px !important;">
+      <?php
+      // Generate pagination URL with current filters
+      function getPaginationUrl($page) {
+        $params = $_GET;
+        $params['page'] = $page;
+        return '?' . http_build_query($params);
+      }
+      
+      $showingStart = (($currentPage - 1) * $recordsPerPage) + 1;
+      $showingEnd = min($currentPage * $recordsPerPage, $totalRecords);
+      ?>
+      
+      <div class="pagination-info">
+        <div class="page-indicator">
+          <span class="page-text">Page</span>
+          <span class="page-current"><?= $currentPage ?></span>
+          <span class="page-divider">of</span>
+          <span class="page-total"><?= $totalPages ?></span>
+        </div>
+        <div class="records-info">
+          Showing <strong><?= $showingStart ?>-<?= $showingEnd ?></strong> of <strong><?= $totalRecords ?></strong> permits
+        </div>
+      </div>
+      
+      <div class="pagination-nav">
+        <!-- First page -->
+        <?php if ($currentPage > 1): ?>
+          <a href="<?= getPaginationUrl(1) ?>" class="nav-btn first-btn" title="First page">
+            <i class="nav-icon">⇤</i>
+          </a>
+        <?php else: ?>
+          <span class="nav-btn disabled" title="Already on first page">
+            <i class="nav-icon">⇤</i>
+          </span>
+        <?php endif; ?>
+        
+        <!-- Previous page -->
+        <?php if ($currentPage > 1): ?>
+          <a href="<?= getPaginationUrl($currentPage - 1) ?>" class="nav-btn prev-btn" title="Previous page">
+            <i class="nav-icon">‹</i>
+          </a>
+        <?php else: ?>
+          <span class="nav-btn disabled" title="First page">
+            <i class="nav-icon">‹</i>
+          </span>
+        <?php endif; ?>
+        
+        <!-- Page numbers -->
+        <div class="page-numbers">
+          <?php
+          $startPage = max(1, $currentPage - 2);
+          $endPage = min($totalPages, $currentPage + 2);
+          
+          for ($i = $startPage; $i <= $endPage; $i++) {
+            if ($i == $currentPage) {
+              echo '<span class="page-num active">' . $i . '</span>';
+            } else {
+              echo '<a href="' . getPaginationUrl($i) . '" class="page-num" title="Go to page ' . $i . '">' . $i . '</a>';
+            }
+          }
+          ?>
+        </div>
+        
+        <!-- Next page -->
+        <?php if ($currentPage < $totalPages): ?>
+          <a href="<?= getPaginationUrl($currentPage + 1) ?>" class="nav-btn next-btn" title="Next page">
+            <i class="nav-icon">›</i>
+          </a>
+        <?php else: ?>
+          <span class="nav-btn disabled" title="Last page">
+            <i class="nav-icon">›</i>
+          </span>
+        <?php endif; ?>
+        
+        <!-- Last page -->
+        <?php if ($currentPage < $totalPages): ?>
+          <a href="<?= getPaginationUrl($totalPages) ?>" class="nav-btn last-btn" title="Last page">
+            <i class="nav-icon">⇥</i>
+          </a>
+        <?php else: ?>
+          <span class="nav-btn disabled" title="Already on last page">
+            <i class="nav-icon">⇥</i>
+          </span>
+        <?php endif; ?>
+      </div>
+    </div>
+  <?php endif; ?>
+  
+  <!-- Info when showing exactly one page -->
+  <?php if ($totalPages <= 1): ?>
+    <div class="table-pagination simple">
+      <div class="simple-info">
+        <i class="info-icon">📋</i>
+        <span>Displaying all <strong><?= $totalRecords ?></strong> permits</span>
+      </div>
+    </div>
+  <?php endif; ?>
+  
   </div>
 </div>
 
 <script>
+// Check for success messages from redirect
+window.onload = function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const msg = urlParams.get('msg');
+  if (msg === 'deleted') {
+    alert('PTW has been successfully deleted.');
+    // Remove the query param from URL without refreshing
+    const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+    window.history.replaceState({path: newUrl}, '', newUrl);
+  } else if (msg === 'error') {
+    const error = urlParams.get('error');
+    alert('Error deleting PTW: ' + (error ? decodeURIComponent(error) : 'Unknown error'));
+  }
+}
+
 function disableLink(id) {
   const link = document.getElementById(id);
   if (link) {

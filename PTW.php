@@ -124,9 +124,13 @@ $next_permit = "Will be auto-generated";
             <td><input type="text" name="subcontractor"></td>
     </tr>
 -->
+    <?php
+    $min_date = date('Y-m-d');
+    $max_date = date('Y-m-d', strtotime('+2 days'));
+    ?>
     <tr>
-        <th>تاريخ اصدار التصريح</th>
-        <td><input type="date" name="permit_date" required></td>
+        <th>تاريخ بدء الاعمال</th>
+        <td><input type="date" name="permit_date" min="<?php echo $min_date; ?>" max="<?php echo $max_date; ?>" required></td>
     </tr>
     <tr>
         <th>توقيت بدء الاعمال</th>
@@ -143,6 +147,10 @@ $next_permit = "Will be auto-generated";
     <tr>
         <th>المعدات و الادوات المستخدمه</th>
         <td><input type="text" name="tools_equipment" required></td>
+    </tr>
+    <tr>
+        <th>صورة مرفقة (اختياري)</th>
+        <td><input type="file" name="attachment_image" accept="image/*"></td>
     </tr>
     <tr>
   <th>هل يوجد مقاول؟</th>
@@ -175,6 +183,8 @@ $next_permit = "Will be auto-generated";
             <select class="select-3" name="operation" id="operation" required>
                 <option value="" disabled selected>اختر نوع العملية</option>
                 
+                <option value="تقليم الجذور ">تقليم الجذور</option>
+                <option value="السباكة">السباكة</option>
                 <option value="أعمال حفر">أعمال حفر</option>
                 <option value="أعمال لحام كهربي">أعمال لحام كهربي</option>
                 <option value="العمل على ارتفاع سبايدر">العمل على ارتفاع سبايدر</option>
@@ -367,6 +377,90 @@ $next_permit = "Will be auto-generated";
     <a href="logout.php" class="btn">Logout</a>
 </div>
 </form>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay" style="display: none;">
+    <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">جاري إرسال التصريح...</div>
+        <div class="loading-progress-bar">
+            <div class="loading-progress-fill" id="progressFill"></div>
+        </div>
+        <div class="loading-percentage" id="loadingPercentage">0%</div>
+    </div>
+</div>
+
+<style>
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+}
+
+.loading-content {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    min-width: 300px;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #1d546d;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+    font-family: 'Cairo', sans-serif;
+}
+
+.loading-progress-bar {
+    width: 100%;
+    height: 10px;
+    background: #f0f0f0;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.loading-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1d546d, #5f9598);
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 5px;
+}
+
+.loading-percentage {
+    font-size: 16px;
+    color: #666;
+    font-weight: bold;
+}
+</style>
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
     const myForm = document.getElementById("my_form");
@@ -374,6 +468,29 @@ $next_permit = "Will be auto-generated";
     if (myForm) {
         myForm.addEventListener("submit", function(event) {
             event.preventDefault();
+            
+            // Show loading overlay
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const progressFill = document.getElementById('progressFill');
+            const loadingPercentage = document.getElementById('loadingPercentage');
+            
+            loadingOverlay.style.display = 'flex';
+            
+            // Disable form inputs to prevent user interaction
+            const formElements = myForm.querySelectorAll('input, select, textarea, button');
+            formElements.forEach(element => element.disabled = true);
+            
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.random() * 15;
+                    if (progress > 90) progress = 90;
+                    progressFill.style.width = progress + '%';
+                    loadingPercentage.textContent = Math.round(progress) + '%';
+                }
+            }, 200);
+            
             let formData = new FormData(this);
             
             fetch("submit_button/submit_ptw.php", {
@@ -382,14 +499,29 @@ $next_permit = "Will be auto-generated";
             })
             .then(response => response.json())
             .then(data => {
-                if (data.status === "success") {
-                    alert(data.message);
-                    window.location.href = "ptw_overview.php";
-                } else {
-                    alert("حدث خطأ أثناء الإرسال:\n" + data.message);
-                }
+                // Complete progress
+                clearInterval(progressInterval);
+                progress = 100;
+                progressFill.style.width = '100%';
+                loadingPercentage.textContent = '100%';
+                
+                setTimeout(() => {
+                    loadingOverlay.style.display = 'none';
+                    
+                    if (data.status === "success") {
+                        alert(data.message);
+                        window.location.href = "ptw_overview.php";
+                    } else {
+                        // Re-enable form on error
+                        formElements.forEach(element => element.disabled = false);
+                        alert("حدث خطأ أثناء الإرسال:\n" + data.message);
+                    }
+                }, 500);
             })
             .catch(error => {
+                clearInterval(progressInterval);
+                loadingOverlay.style.display = 'none';
+                formElements.forEach(element => element.disabled = false);
                 console.error("حدث خطأ أثناء الإرسال:", error);
                 alert("فشل الاتصال بالخادم. حاول مرة أخرى.");
             });
@@ -409,8 +541,29 @@ $next_permit = "Will be auto-generated";
         });
     }
 
+    // Validate Permit Date
+    const permitDateInput = document.querySelector('input[name="permit_date"]');
+    if (permitDateInput) {
+        permitDateInput.addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            
+            const maxDate = new Date();
+            maxDate.setDate(today.getDate() + 2);
+            maxDate.setHours(23,59,59,999);
+
+            if (selectedDate < today || selectedDate > maxDate) {
+                alert('تاريخ بدء الأعمال يجب أن يكون اليوم أو خلال 48 ساعة فقط.');
+                this.value = ''; // Clear invalid date
+            }
+        });
+    }
+
     // Dynamic risk options based on operation selection
 const operationMapping = {
+        "تقليم الجذور ": ["سقوط الاشجار  علي  الافراد والممتلكات "],
+        "السباكة": ["انسكاب وتسريب  وغمر"],
         "أعمال حفر": ["عمل في حفر"],
         "أعمال لحام كهربي": ["مخاطر حريق"],
         "العمل على ارتفاع سبايدر": ["سقوط من على ارتفاع"],

@@ -1,5 +1,9 @@
 <?php 
-require_once "constants/dbconnect.php";
+require_once "constants/auth_check.php";
+
+if (!hasAccess('dailyreport_overview.php', 'export_excel') && !hasAccess('dailyreport_overview.php', 'export') && !hasAccess('dailyreport_overview.php', 'view')) {
+    die("Unauthorized Access");
+}
 
 
 mysqli_set_charset($conn, "utf8mb4");

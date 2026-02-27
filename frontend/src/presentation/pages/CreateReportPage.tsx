@@ -1,0 +1,181 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useLookups } from '../../application/hooks/useLookups';
+import { useAuth } from '../context/AuthContext';
+import api from '../../infrastructure/api/client';
+import { FileText, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
+
+const workTypeMapping: Record<string, string[]> = {
+    "متابعه الاعمال": [
+        "اعمال روتينية", "تصريح عمل في اماكن محصورة", "تصريح عمل على ارتفاع",
+        "اعمال خطرة بدون تصريح", "تصريح عمل بمواد كميائية خطرة", "تصريح حفر",
+        "تصريح عزل طاقه", "تصريح اعمال ساخنه", "تصريح رفع"
+    ],
+    "فحص الموقع": [
+        "فحص انظمة واجهزة الاطفاء", "فحص التوصيلات الكهربائية", "فحص انظمة السباكة",
+        "فحص الحجر الهاشمي والرخام والجبسم بورد", "فحص الزجاج السيكوريت",
+        "فحص الديكوريشن الخشب واللوفارات الالومنيوم", "فحص حالة التخزين",
+        "فحص النظافة العامة للمكان", "فحص حالة الطريق", "فحص حالة اللاند اسكيب",
+        "فحص البنية التحتية", "فحص وجود حشارات او حيوانات ضارة"
+    ],
+    "مخالفات السلوك": [
+        "مخالفة قيادة مركبة", "عدم ارتداء مهمات الوقاية الشخصية", "التصرف بشكل غير امن"
+    ],
+};
+
+const selectClass = "w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
+const labelClass = "block text-sm font-semibold text-gray-700 mb-1.5";
+
+const CreateReportPage: React.FC = () => {
+    const navigate = useNavigate();
+    const { projects, departments } = useLookups();
+    const { hasPermission } = useAuth();
+    const [form, setForm] = useState({
+        project: '', department: '', observation: '', work_type: '', risk: '',
+        observation_description: '', operation_corrective: '', description: '',
+    });
+    const [submitting, setSubmitting] = useState(false);
+    const [success, setSuccess] = useState(false);
+    const [error, setError] = useState('');
+
+    // RBAC: Only users with dailyreport.php submit permission can access this
+    if (!hasPermission('dailyreport.php', 'submit')) {
+        return (
+            <div className="max-w-lg mx-auto text-center py-20">
+                <div className="inline-flex p-4 rounded-full bg-red-50 text-red-400 mb-4">
+                    <FileText size={32} />
+                </div>
+                <h2 className="text-xl font-bold text-gray-800">Access Denied</h2>
+                <p className="text-gray-500 mt-2">You do not have permission to submit daily reports.</p>
+            </div>
+        );
+    }
+
+    const set = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }));
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+        setError('');
+        try {
+            await api.post('/reports/submit', form);
+            setSuccess(true);
+            setTimeout(() => navigate('/reports'), 1500);
+        } catch (err: any) {
+            setError(err?.response?.data?.message || err?.message || 'Submission failed.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (success) {
+        return (
+            <div className="max-w-lg mx-auto text-center py-20">
+                <div className="inline-flex p-4 rounded-full bg-green-50 text-green-500 mb-4 animate-bounce">
+                    <CheckCircle size={40} />
+                </div>
+                <h2 className="text-xl font-bold text-gray-800">Report Submitted!</h2>
+                <p className="text-gray-500 mt-2">Redirecting to reports list...</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="max-w-2xl mx-auto">
+            <button onClick={() => navigate('/reports')} className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 mb-6 transition-colors">
+                <ArrowLeft size={16} /> Back to Reports
+            </button>
+
+            <div className="bg-white rounded-2xl border border-gray-100 p-8">
+                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3 mb-8">
+                    <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                        <FileText size={20} className="text-blue-600" />
+                    </div>
+                    New Daily Report
+                </h1>
+
+                {error && <div className="bg-red-50 text-red-700 px-4 py-3 rounded-xl text-sm mb-6 border border-red-200">{error}</div>}
+
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label className={labelClass}>Project (المشروع)</label>
+                            <select required value={form.project} onChange={e => set('project', e.target.value)} className={selectClass}>
+                                <option value="">Select</option>
+                                {projects.map(p => <option key={p.id} value={p.id}>{p.project_name}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className={labelClass}>Department (القسم)</label>
+                            <select required value={form.department} onChange={e => set('department', e.target.value)} className={selectClass}>
+                                <option value="">Select</option>
+                                {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className={labelClass}>Observation Type (طبيعه العمل)</label>
+                        <select required value={form.observation} onChange={e => { set('observation', e.target.value); set('work_type', ''); }} className={selectClass}>
+                            <option value="">Select</option>
+                            <option value="متابعه الاعمال">متابعه الاعمال</option>
+                            <option value="فحص الموقع">فحص الموقع</option>
+                            <option value="مخالفات السلوك">مخالفات السلوك</option>
+                        </select>
+                    </div>
+
+                    {form.observation && (
+                        <div>
+                            <label className={labelClass}>Work Description (وصف العمل)</label>
+                            <select required value={form.work_type} onChange={e => set('work_type', e.target.value)} className={selectClass}>
+                                <option value="">Select</option>
+                                {workTypeMapping[form.observation]?.map(wt => <option key={wt} value={wt}>{wt}</option>)}
+                            </select>
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label className={labelClass}>Risk Level (شدة الخطورة)</label>
+                            <select required value={form.risk} onChange={e => set('risk', e.target.value)} className={selectClass}>
+                                <option value="">Select</option>
+                                <option value="عالية">عالية (High)</option>
+                                <option value="متوسطه">متوسطه (Medium)</option>
+                                <option value="منخفضة">منخفضة (Low)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className={labelClass}>Safety Compliance</label>
+                            <select required value={form.observation_description} onChange={e => set('observation_description', e.target.value)} className={selectClass}>
+                                <option value="">Select</option>
+                                <option value="ممارسه جيده">ممارسة جيده (Good Practice)</option>
+                                <option value="ملاحظة تحتاج الي تصحيح">ملاحظة تحتاج الي تصحيح (Needs Correction)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className={labelClass}>Corrective Action (الاجراء التصحيحي)</label>
+                        <select required value={form.operation_corrective} onChange={e => set('operation_corrective', e.target.value)} className={selectClass}>
+                            <option value="">Select</option>
+                            <option value="تم تنفيذ تعليمات السلامه">تم تنفيذ تعليمات السلامة</option>
+                            <option value="لم يتم تنفيذ تعليمات السلامه">لم يتم تنفيذ تعليمات السلامة</option>
+                            <option value="ايقاف الاعمال">ايقاف الاعمال</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className={labelClass}>Notes (ملاحظات)</label>
+                        <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={4} className={`${selectClass} resize-none`} placeholder="Enter additional observations..." />
+                    </div>
+
+                    <button type="submit" disabled={submitting} className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
+                        {submitting ? <><Loader2 size={18} className="animate-spin" /> Submitting...</> : 'Submit Report'}
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+export default CreateReportPage;

@@ -720,7 +720,14 @@ $overdueCount = count($overdueReports);
     <?php $displayCount = $overdueCount ?? 0; ?>
 
     <div class="sidebar">
-      <button class="toggle-button" onclick="toggleSidebar()">⚠️ Overdue Reports (<?= $displayCount ?>)</button>
+      <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px;">
+        <button class="toggle-button" style="margin: 0;" onclick="toggleSidebar()">⚠️ Overdue Reports (<?= $displayCount ?>)</button>
+        <?php if (hasAccess('dailyreport_analysis.php', 'export_excel') || hasAccess('dailyreport_analysis.php', 'export') || hasAccess('dailyreport_analysis.php', 'view')): ?>
+        <a href="export_overdue_excel.php?project=<?= urlencode($selectedProject) ?>&department=<?= urlencode($selectedDepartment) ?>" class="toggle-button" style="text-decoration: none; background: #28a745; color: white; margin: 0;">
+           📥 Export to Excel
+        </a>
+        <?php endif; ?>
+      </div>
       <div id="overdueContent">
         <?php if (!empty($overdueReports)): ?>
           <div class="alert-box">
@@ -763,11 +770,13 @@ $overdueCount = count($overdueReports);
                   <td><?= htmlspecialchars($r['exceeded_by']) ?> hrs late</td>
                   <td><?= htmlspecialchars($r['tag']) ?></td>
                   <td>
+                    <?php if (hasAccess('dailyreport_analysis.php', 'send_email')): ?>
                     <button class="email-btn" onclick="sendOverdueEmail(<?= $report_id ?>)" 
                             data-report-id="<?= $report_id ?>"
                             id="email_btn_<?= $report_id ?>">
                       📧 Send Email
                     </button>
+                    <?php endif; ?>
                   </td>
                 </tr>
                 

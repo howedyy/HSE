@@ -1,8 +1,9 @@
-<?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+<?php 
+require_once "constants/auth_check.php";
 
-require_once "constants/dbconnect.php";
+if (!hasAccess('ptw_overview.php', 'view')) {
+    die("Unauthorized Access");
+}
 
 if (!isset($_GET['permit_number']) || empty($_GET['permit_number'])) {
     die("Error: No permit number provided.");

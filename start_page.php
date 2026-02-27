@@ -4,1306 +4,647 @@ require_once "constants/auth_check.php";
 require_once "include/header.php";
 require_once "constants/dbconnect.php";
 require_once "constants/auth.php";
+require_once "include/language_setup.php"; // Enable Bilingual Support
 
-$loggedInUser = $_SESSION['username'] ?? '(not set)';
+$loggedInUser = $_SESSION['username'] ?? 'User';
 $userType = $_SESSION['user_type'] ?? 0;
 
-// Get dashboard statistics
+// --- Data Gathering ---
+
+// 1. PTW Stats
 $stats = [
     'total_ptw' => 0,
     'pending_ptw' => 0,
     'completed_ptw' => 0,
-    'today_reports' => 0
+    'today_reports' => 0,
+    'active_ptw' => 0 
 ];
 
-// Total PTWs
 $result = $conn->query("SELECT COUNT(*) as count FROM PTW");
-if ($result) {
-    $stats['total_ptw'] = $result->fetch_assoc()['count'];
-}
+$stats['total_ptw'] = $result ? $result->fetch_assoc()['count'] : 0;
 
-// Pending PTWs (status = 0)
 $result = $conn->query("SELECT COUNT(*) as count FROM PTW WHERE ptw_status = 0");
-if ($result) {
-    $stats['pending_ptw'] = $result->fetch_assoc()['count'];
-}
+$stats['pending_ptw'] = $result ? $result->fetch_assoc()['count'] : 0;
 
-// Completed PTWs (status = 2)
 $result = $conn->query("SELECT COUNT(*) as count FROM PTW WHERE ptw_status = 2");
-if ($result) {
-    $stats['completed_ptw'] = $result->fetch_assoc()['count'];
-}
+$stats['completed_ptw'] = $result ? $result->fetch_assoc()['count'] : 0;
 
-// Today's daily reports
+// Active = Approved (1)
+$result = $conn->query("SELECT COUNT(*) as count FROM PTW WHERE ptw_status = 1");
+$stats['active_ptw'] = $result ? $result->fetch_assoc()['count'] : 0;
+
 $result = $conn->query("SELECT COUNT(*) as count FROM daily_report WHERE DATE(date) = CURDATE()");
-if ($result) {
-    $stats['today_reports'] = $result->fetch_assoc()['count'];
+$stats['today_reports'] = $result ? $result->fetch_assoc()['count'] : 0;
+
+// Best Safety Practices Metric - Project with most "Good Practices"
+// Count total daily reports with "Good Practice" (ممارسه جيده)
+$total_good_practices_sql = "SELECT COUNT(*) as count FROM daily_report WHERE observation_description = 'ممارسه جيده'";
+$res = $conn->query($total_good_practices_sql);
+$total_good_practices = $res ? $res->fetch_assoc()['count'] : 0;
+
+// Get the project with most good practices
+$best_project_sql = "
+    SELECT p.project_name, COUNT(*) as good_practice_count
+    FROM daily_report dr
+    LEFT JOIN project p ON dr.project = p.id
+    WHERE dr.observation_description = 'ممارسه جيده'
+    GROUP BY dr.project
+    ORDER BY good_practice_count DESC
+    LIMIT 1
+";
+$res = $conn->query($best_project_sql);
+$best_project_data = ($res && $row = $res->fetch_assoc()) ? $row : null;
+$best_project_name = $best_project_data ? $best_project_data['project_name'] : 'None';
+$best_project_count = $best_project_data ? $best_project_data['good_practice_count'] : 0;
+
+// Calculate percentage of good practices for the best project
+$best_project_total_sql = "
+    SELECT COUNT(*) as count 
+    FROM daily_report dr
+    LEFT JOIN project p ON dr.project = p.id
+    WHERE p.project_name = ?
+";
+$stmt = $conn->prepare($best_project_total_sql);
+if ($stmt && $best_project_name !== 'None') {
+    $stmt->bind_param("s", $best_project_name);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $best_project_total = $res ? $res->fetch_assoc()['count'] : 1;
+    $stmt->close();
+} else {
+    $best_project_total = 1;
 }
 
-// Recent activities
-$recent_activities = [];
-$result = $conn->query("
-    SELECT permit_number, action, action_by, action_date 
-    FROM ptw_history 
-    ORDER BY action_date DESC 
-    LIMIT 5
-");
-if ($result) {
-    while ($row = $result->fetch_assoc()) {
-        $recent_activities[] = $row;
+$best_project_percentage = $best_project_total > 0 ? round(($best_project_count / $best_project_total) * 100) : 0;
+
+// New Chart Data: High Risk Monitoring (from dailyreport_analysis.php logic)
+$total_hr_sql = "SELECT COUNT(*) as count FROM daily_report WHERE risk = 'عالية' OR risk = 'High'";
+$res = $conn->query($total_hr_sql);
+$total_hr_count = $res ? $res->fetch_assoc()['count'] : 0;
+
+$overdue_hr_sql = "SELECT COUNT(*) as count FROM daily_report WHERE (risk = 'عالية' OR risk = 'High') AND (
+    (closed_at IS NULL AND TIMESTAMPDIFF(HOUR, date, NOW()) > 8)
+    OR
+    (closed_at IS NOT NULL AND TIMESTAMPDIFF(HOUR, date, closed_at) > 8)
+)";
+$res = $conn->query($overdue_hr_sql);
+$overdue_hr_total = $res ? $res->fetch_assoc()['count'] : 0;
+
+$hr_compliance_rate = $total_hr_count > 0 ? round((($total_hr_count - $overdue_hr_total) / $total_hr_count) * 100) : 100;
+
+// Top Project with High Risk Overdue
+$hr_project_sql = "
+    SELECT pr.project_name, COUNT(*) as count 
+    FROM daily_report dr
+    LEFT JOIN project pr ON dr.project = pr.id
+    WHERE (dr.risk = 'عالية' OR dr.risk = 'High') AND (
+        (dr.closed_at IS NULL AND TIMESTAMPDIFF(HOUR, dr.date, NOW()) > 8)
+        OR
+        (dr.closed_at IS NOT NULL AND TIMESTAMPDIFF(HOUR, dr.date, dr.closed_at) > 8)
+    )
+    GROUP BY dr.project
+    ORDER BY count DESC
+    LIMIT 1
+";
+$hr_project_res = $conn->query($hr_project_sql);
+$top_hr_project = ($hr_project_res && $row = $hr_project_res->fetch_assoc()) ? $row['project_name'] : 'None';
+
+// Top Department with High Risk Overdue
+$hr_dept_sql = "
+    SELECT d.department_name, COUNT(*) as count 
+    FROM daily_report dr
+    LEFT JOIN department d ON dr.department = d.id
+    WHERE (dr.risk = 'عالية' OR dr.risk = 'High') AND (
+        (dr.closed_at IS NULL AND TIMESTAMPDIFF(HOUR, dr.date, NOW()) > 8)
+        OR
+        (dr.closed_at IS NOT NULL AND TIMESTAMPDIFF(HOUR, dr.date, dr.closed_at) > 8)
+    )
+    GROUP BY dr.department
+    ORDER BY count DESC
+    LIMIT 1
+";
+$hr_dept_res = $conn->query($hr_dept_sql);
+$top_hr_dept = ($hr_dept_res && $row = $hr_dept_res->fetch_assoc()) ? $row['department_name'] : 'None';
+
+// New Chart Data: Task Completion
+$task_completion_rate = $stats['total_ptw'] > 0 ? round(($stats['completed_ptw'] / $stats['total_ptw']) * 100) : 0;
+
+// HSE User Activity Metric (Daily)
+// Count total HSE users (user_type = 2)
+$total_hse_users_sql = "SELECT COUNT(*) as count FROM users WHERE user_type = 2";
+$res = $conn->query($total_hse_users_sql);
+$total_hse_users = $res ? $res->fetch_assoc()['count'] : 0;
+
+// Count active HSE users TODAY (those who created PTW or daily reports today)
+// Note: PTW doesn't store user_id directly, we need to match by username from session
+// daily_report uses user_id field
+$active_hse_users_sql = "
+    SELECT COUNT(DISTINCT u.id) as count 
+    FROM users u
+    WHERE u.user_type = 2 
+    AND (
+        EXISTS (
+            SELECT 1 FROM PTW p 
+            WHERE p.editor_name = u.editor_name 
+            AND DATE(p.permit_date) = CURDATE()
+        )
+        OR EXISTS (
+            SELECT 1 FROM daily_report dr 
+            WHERE dr.user_id = u.id 
+            AND DATE(dr.date) = CURDATE()
+        )
+    )
+";
+$res = $conn->query($active_hse_users_sql);
+$active_hse_users = $res ? $res->fetch_assoc()['count'] : 0;
+
+// Calculate daily activity rate
+$hse_activity_rate = $total_hse_users > 0 ? round(($active_hse_users / $total_hse_users) * 100) : 0;
+
+// Get most active user TODAY
+$most_active_user_sql = "
+    SELECT u.editor_name, u.username,
+    (
+        (SELECT COUNT(*) FROM PTW WHERE editor_name = u.editor_name AND DATE(permit_date) = CURDATE()) +
+        (SELECT COUNT(*) FROM daily_report WHERE user_id = u.id AND DATE(date) = CURDATE())
+    ) as activity_count
+    FROM users u
+    WHERE u.user_type = 2
+    HAVING activity_count > 0
+    ORDER BY activity_count DESC
+    LIMIT 1
+";
+$res = $conn->query($most_active_user_sql);
+$most_active_user = ($res && $row = $res->fetch_assoc()) ? $row['editor_name'] : 'None';
+$most_active_count = ($res && isset($row['activity_count'])) ? $row['activity_count'] : 0;
+
+// 3. Recent Incidents
+$recent_incidents = [];
+$inc_sql = "SELECT dr.id, dr.date, dr.description, dr.risk, dr.report_status, p.project_name 
+            FROM daily_report dr 
+            LEFT JOIN project p ON dr.project = p.id 
+            ORDER BY dr.date DESC LIMIT 5";
+$inc_res = $conn->query($inc_sql);
+if ($inc_res) {
+    while ($row = $inc_res->fetch_assoc()) {
+        $recent_incidents[] = $row;
     }
 }
 
-// Monthly PTW data for chart
+// 4. Chart Data (Monthly)
 $monthly_data = [];
-$months_ar = [
-    'Jan' => 'يناير', 'Feb' => 'فبراير', 'Mar' => 'مارس',
-    'Apr' => 'أبريل', 'May' => 'مايو', 'Jun' => 'يونيو',
-    'Jul' => 'يوليو', 'Aug' => 'أغسطس', 'Sep' => 'سبتمبر',
-    'Oct' => 'أكتوبر', 'Nov' => 'نوفمبر', 'Dec' => 'ديسمبر'
-];
+$months_display = [];
+$counts_display = [];
 
 for ($i = 5; $i >= 0; $i--) {
     $month = date('Y-m', strtotime("-$i months"));
-    $result = $conn->query("SELECT COUNT(*) as count FROM PTW WHERE DATE_FORMAT(permit_date, '%Y-%m') = '$month'");
-    if ($result) {
-        $month_key = date('M', strtotime("-$i months"));
-        $monthly_data[] = [
-            'month' => $month_key,
-            'month_ar' => $months_ar[$month_key] ?? $month_key,
-            'count' => $result->fetch_assoc()['count']
-        ];
-    }
+    $month_en = date('M', strtotime("-$i months"));
+    
+    $res = $conn->query("SELECT COUNT(*) as count FROM PTW WHERE DATE_FORMAT(permit_date, '%Y-%m') = '$month'");
+    $count = $res ? $res->fetch_assoc()['count'] : 0;
+    
+    // Use Translation for Month
+    $month_label = $translations[$lang_code]['months'][$month_en] ?? $month_en;
+    
+    $monthly_data[] = ['month' => $month_label, 'count' => $count];
+    $months_display[] = $month_label;
+    $counts_display[] = $count;
 }
 ?>
 
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="<?= $lang_code ?>" dir="<?= $dir ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم - نظام الصحة والسلامة المهنية</title>
-    <link rel="stylesheet" href="assests/font-awesome/css/font-awesome.min.css">
+    <title><?= __('app_name') ?> - Dashboard</title>
+    <link rel="stylesheet" href="custom/css/modern_dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="js/chart.umd.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* Dynamic Direction Styles */
+        body { 
+            font-family: 'Cairo', 'Segoe UI', sans-serif; 
+        }
+        
+        /* Modern Header specific override to keep it LTR */
+        .modern-header {
+            direction: ltr; /* Force LTR for this block layout */
         }
 
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            -webkit-overflow-scrolling: touch;
-            scroll-behavior: smooth;
-            direction: rtl;
+        /* Adjustments for RTL layout elsewhere */
+        <?php if($dir === 'rtl'): ?>
+        .incident-item {
+            padding-right: 1rem;
+            padding-left: 1rem;
         }
-
-        /* Import Arabic font */
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap');
-
-        /* RTL improvements */
-        .welcome-header h1 {
-            text-align: center;
+        .incident-severity {
+            margin-right: 1rem;
+            margin-left: 0;
         }
-
-        .actions-grid {
-            text-align: center;
+        .incident-info {
+            margin-right: 0;
+            margin-left: 1rem;
         }
-
-        .action-btn {
-            text-align: center;
+        .section-title {
+            gap: 0.75rem;
         }
-
-        .activity-item {
-            text-align: right;
+        .section-title i {
+            margin-left: 0.5rem;
         }
-
-        .activity-time {
+        
+        /* Ensure the header text also respects the requested LTR layout inside the flex container */
+        .header-title {
             text-align: left;
         }
-
-        /* Better spacing for Arabic text */
-        .stat-label, .activity-action, .activity-details {
-            line-height: 1.6;
-        }
-
-        /* Improve button spacing for Arabic */
-        .action-btn span {
-            white-space: nowrap;
-        }
-
-        /* Improve Arabic text rendering */
-        .welcome-header h1, 
-        .stat-label, 
-        .action-btn span,
-        .activity-action,
-        .activity-details,
-        .quick-actions h3,
-        .chart-container h3,
-        .recent-activity h3 {
-            font-weight: 500;
-            letter-spacing: 0.5px;
-        }
-
-        /* Better number display for Arabic */
-        .stat-number {
-            font-family: 'Cairo', Arial, sans-serif;
-            font-weight: 700;
-        }
-
-        /* Improve datetime display */
-        #datetime {
-            font-family: 'Cairo', Arial, sans-serif;
-            font-weight: 500;
-        }
-
-        /* Touch-friendly improvements */
-        .stat-card, .action-btn {
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-        }
-
-        /* Smooth scrolling for better UX */
-        html {
-            scroll-behavior: smooth;
-        }
-
-        /* Prevent text selection on interactive elements */
-        .stat-card, .action-btn, .activity-item {
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-
-        .dashboard-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .welcome-header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            animation: slideDown 0.6s ease-out;
-        }
-
-        .welcome-header h1 {
-            color: #2c3e50;
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .welcome-header .user-badge {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 25px;
-            font-size: 0.8em;
-            font-weight: normal;
-        }
-
-        .datetime-display {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 30px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            animation: slideUp 0.6s ease-out 0.2s both;
-        }
-
-        .datetime-display #datetime {
-            font-size: 1.5em;
-            color: #34495e;
-            font-weight: 600;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            animation: fadeInUp 0.6s ease-out;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .stat-card:hover::before {
-            left: 100%;
-        }
-
-        .stat-icon {
-            font-size: 3em;
-            margin-bottom: 15px;
-            color: #667eea;
-        }
-
-        .stat-card.pending .stat-icon { color: #f39c12; }
-        .stat-card.completed .stat-icon { color: #27ae60; }
-        .stat-card.reports .stat-icon { color: #e74c3c; }
-
-        .stat-number {
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 5px;
-            transition: all 0.3s ease;
-        }
-
-        .stat-number.loading {
-            opacity: 0.5;
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 0.8; }
-        }
-
-        /* Loading spinner for stats refresh */
-        .refresh-indicator {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(102, 126, 234, 0.9);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 25px;
-            font-size: 0.9em;
-            display: none;
-            align-items: center;
-            gap: 8px;
-            z-index: 1000;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .refresh-indicator i {
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .stat-label {
-            color: #7f8c8d;
-            font-size: 1.1em;
-            font-weight: 500;
-        }
-
-        .quick-actions {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            animation: slideLeft 0.6s ease-out 0.4s both;
-        }
-
-        .quick-actions h3 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-size: 1.5em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .actions-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .action-btn {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 15px;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .action-btn:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-            color: white;
-            text-decoration: none;
-        }
-
-        .action-btn i {
-            font-size: 1.2em;
-        }
-
-        .dashboard-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        .chart-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            animation: slideRight 0.6s ease-out 0.6s both;
-            overflow-x: auto;
-        }
-
-        .chart-wrapper {
-            min-width: 300px;
-            height: 300px;
-            position: relative;
-        }
-
-        .recent-activity {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            animation: slideLeft 0.6s ease-out 0.8s both;
-        }
-
-        .activity-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            background: rgba(102, 126, 234, 0.05);
-            transition: all 0.3s ease;
-        }
-
-        .activity-item:hover {
-            background: rgba(102, 126, 234, 0.1);
-            transform: translateX(10px);
-        }
-
-        .activity-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.9em;
-        }
-
-        .activity-content {
-            flex: 1;
-        }
-
-        .activity-action {
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .activity-details {
-            font-size: 0.9em;
-            color: #7f8c8d;
-            margin-top: 2px;
-        }
-
-        .activity-time {
-            font-size: 0.8em;
-            color: #95a5a6;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes slideRight {
-            from {
-                opacity: 0;
-                transform: translateX(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Tablet responsiveness */
-        @media (max-width: 1024px) {
-            .dashboard-container {
-                padding: 15px;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-                gap: 15px;
-            }
-            
-            .dashboard-row {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-            
-            .welcome-header h1 {
-                font-size: 2.2em;
-            }
-        }
-
-        /* Mobile landscape & small tablets */
-        @media (max-width: 768px) {
-            .dashboard-container {
-                padding: 12px;
-            }
-            
-            .welcome-header {
-                padding: 20px 15px;
-                margin-bottom: 20px;
-            }
-            
-            .welcome-header h1 {
-                font-size: 1.8em;
-                flex-direction: column;
-                gap: 8px;
-            }
-            
-            .welcome-header .user-badge {
-                font-size: 0.7em;
-                padding: 4px 12px;
-            }
-            
-            .datetime-display {
-                padding: 15px;
-                margin-bottom: 20px;
-            }
-            
-            .datetime-display #datetime {
-                font-size: 1.2em;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-                gap: 12px;
-            }
-            
-            .stat-card {
-                padding: 20px 15px;
-            }
-            
-            .stat-icon {
-                font-size: 2.5em;
-                margin-bottom: 10px;
-            }
-            
-            .stat-number {
-                font-size: 2em;
-            }
-            
-            .stat-label {
-                font-size: 1em;
-            }
-            
-            .quick-actions {
-                padding: 20px 15px;
-                margin-bottom: 20px;
-            }
-            
-            .quick-actions h3 {
-                font-size: 1.3em;
-                margin-bottom: 15px;
-            }
-            
-            .actions-grid {
-                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-                gap: 10px;
-            }
-            
-            .action-btn {
-                padding: 12px 15px;
-                font-size: 0.9em;
-                flex-direction: column;
-                text-align: center;
-                gap: 8px;
-            }
-            
-            .action-btn i {
-                font-size: 1.5em;
-            }
-            
-            .chart-container, .recent-activity {
-                padding: 20px 15px;
-            }
-            
-            .chart-container h3, .recent-activity h3 {
-                font-size: 1.3em;
-                margin-bottom: 15px;
-            }
-            
-            .activity-item {
-                padding: 12px;
-                gap: 12px;
-            }
-            
-            .activity-icon {
-                width: 35px;
-                height: 35px;
-                font-size: 0.8em;
-            }
-            
-            .activity-content {
-                flex: 1;
-                min-width: 0;
-            }
-            
-            .activity-action {
-                font-size: 0.9em;
-            }
-            
-            .activity-details {
-                font-size: 0.8em;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-            
-            .activity-time {
-                font-size: 0.75em;
-                text-align: right;
-                min-width: 60px;
-            }
-        }
-
-                 /* Mobile portrait */
-         @media (max-width: 480px) {
-             .refresh-indicator {
-                 top: 10px;
-                 left: 10px;
-                 padding: 8px 12px;
-                 font-size: 0.8em;
-             }
-            .dashboard-container {
-                padding: 10px;
-            }
-            
-            .welcome-header {
-                padding: 15px 10px;
-                margin-bottom: 15px;
-            }
-            
-            .welcome-header h1 {
-                font-size: 1.5em;
-                line-height: 1.3;
-            }
-            
-            .welcome-header .user-badge {
-                font-size: 0.65em;
-                padding: 3px 10px;
-            }
-            
-            .datetime-display {
-                padding: 12px;
-                margin-bottom: 15px;
-            }
-            
-            .datetime-display #datetime {
-                font-size: 1em;
-                line-height: 1.4;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
-            }
-            
-            .stat-card {
-                padding: 15px 10px;
-            }
-            
-            .stat-icon {
-                font-size: 2em;
-                margin-bottom: 8px;
-            }
-            
-            .stat-number {
-                font-size: 1.8em;
-                margin-bottom: 3px;
-            }
-            
-            .stat-label {
-                font-size: 0.85em;
-                line-height: 1.2;
-            }
-            
-            .quick-actions {
-                padding: 15px 10px;
-                margin-bottom: 15px;
-            }
-            
-            .quick-actions h3 {
-                font-size: 1.2em;
-                margin-bottom: 12px;
-            }
-            
-            .actions-grid {
-                grid-template-columns: 1fr;
-                gap: 8px;
-            }
-            
-            .action-btn {
-                padding: 12px;
-                font-size: 0.85em;
-                flex-direction: row;
-                text-align: left;
-                gap: 10px;
-            }
-            
-            .action-btn i {
-                font-size: 1.2em;
-            }
-            
-            .dashboard-row {
-                gap: 15px;
-            }
-            
-            .chart-container, .recent-activity {
-                padding: 15px 10px;
-            }
-            
-            .chart-container h3, .recent-activity h3 {
-                font-size: 1.1em;
-                margin-bottom: 12px;
-            }
-            
-            .activity-item {
-                padding: 10px;
-                gap: 10px;
-                flex-wrap: wrap;
-            }
-            
-            .activity-icon {
-                width: 30px;
-                height: 30px;
-                font-size: 0.7em;
-                flex-shrink: 0;
-            }
-            
-            .activity-content {
-                flex: 1;
-                min-width: 150px;
-            }
-            
-            .activity-action {
-                font-size: 0.85em;
-                font-weight: 600;
-            }
-            
-            .activity-details {
-                font-size: 0.75em;
-                margin-top: 1px;
-                white-space: normal;
-                overflow: visible;
-                text-overflow: initial;
-            }
-            
-            .activity-time {
-                font-size: 0.7em;
-                width: 100%;
-                text-align: left;
-                margin-top: 5px;
-                color: #bdc3c7;
-            }
-        }
-
-        /* Very small screens */
-        @media (max-width: 360px) {
-            .dashboard-container {
-                padding: 8px;
-            }
-            
-            .welcome-header h1 {
-                font-size: 1.3em;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-                gap: 6px;
-            }
-            
-            .stat-card {
-                padding: 12px;
-                display: flex;
-                align-items: center;
-                text-align: left;
-                gap: 15px;
-            }
-            
-            .stat-content {
-                flex: 1;
-            }
-            
-            .stat-icon {
-                font-size: 2.5em;
-                margin-bottom: 0;
-                flex-shrink: 0;
-            }
-            
-            .stat-number {
-                font-size: 1.5em;
-                margin-bottom: 2px;
-            }
-            
-            .stat-label {
-                font-size: 0.8em;
-            }
-            
-            .action-btn {
-                padding: 10px;
-                font-size: 0.8em;
-            }
-        }
-
-        /* Landscape orientation fixes */
-        @media (max-width: 812px) and (orientation: landscape) {
-            .welcome-header {
-                padding: 15px;
-            }
-            
-            .welcome-header h1 {
-                font-size: 1.8em;
-                flex-direction: row;
-                gap: 15px;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-            
-            .actions-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-            
-            .dashboard-row {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        /* High resolution displays */
-        @media (min-width: 1400px) {
-            .dashboard-container {
-                max-width: 1600px;
-                padding: 30px;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 25px;
-            }
-            
-            .welcome-header h1 {
-                font-size: 3em;
-            }
-            
-            .stat-icon {
-                font-size: 3.5em;
-            }
-            
-            .stat-number {
-                font-size: 3em;
-            }
-        }
+        <?php endif; ?>
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- Welcome Header -->
-        <div class="welcome-header">
-            <h1>
-                <i class="fa fa-tachometer"></i>
-                أهلاً وسهلاً بعودتك، <?= htmlspecialchars($loggedInUser) ?>!
-                <span class="user-badge">
-                    <i class="fa fa-user"></i> 
-                    <?= $userType == 1 ? 'مدير' : ($userType == 2 ? 'مشرف' : 'مستخدم') ?>
-                </span>
-            </h1>
-        </div>
 
-        <!-- Date & Time -->
-        <div class="datetime-display">
-            <div id="datetime"></div>
+<div class="dashboard-container">
+    
+    <!-- Modern Header (Kept LTR as requested) -->
+    <header class="modern-header">
+        <div class="header-title">
+            <h1><?= __('app_name') ?></h1>
+            <div class="header-subtitle"><?= __('subtitle') ?></div>
         </div>
+        <div class="header-actions">
+            <!-- Language Switcher -->
+            <a href="?lang=<?= $lang_code === 'en' ? 'ar' : 'en' ?>" class="lang-toggle">
+                <i class="fas fa-globe"></i>
+                <?= $lang_code === 'en' ? 'العربية' : 'English' ?>
+            </a>
 
-        <!-- Statistics Cards -->
-        <div class="stats-grid">
-            <div class="stat-card" onclick="window.location.href='ptw_overview.php'">
-                <i class="fa fa-clipboard stat-icon"></i>
-                <div class="stat-content">
-                    <div class="stat-number" id="total-ptw"><?= $stats['total_ptw'] ?></div>
-                    <div class="stat-label">إجمالي تصاريح العمل</div>
-                </div>
+            <div class="date-badge">
+                <i class="far fa-calendar-alt"></i>
+                <?= date('F j, Y') ?>
             </div>
-            
-            <div class="stat-card pending" onclick="window.location.href='ptw_overview.php?status=0'">
-                <i class="fa fa-clock-o stat-icon"></i>
-                <div class="stat-content">
-                    <div class="stat-number" id="pending-ptw"><?= $stats['pending_ptw'] ?></div>
-                    <div class="stat-label">التصاريح المعلقة</div>
-                </div>
-            </div>
-            
-            <div class="stat-card completed" onclick="window.location.href='ptw_overview.php?status=2'">
-                <i class="fa fa-check-circle stat-icon"></i>
-                <div class="stat-content">
-                    <div class="stat-number" id="completed-ptw"><?= $stats['completed_ptw'] ?></div>
-                    <div class="stat-label">التصاريح المكتملة</div>
-                </div>
-            </div>
-            
-            <div class="stat-card reports" onclick="window.location.href='dailyreport_overview.php'">
-                <i class="fa fa-file-text-o stat-icon"></i>
-                <div class="stat-content">
-                    <div class="stat-number" id="today-reports"><?= $stats['today_reports'] ?></div>
-                    <div class="stat-label">تقارير اليوم</div>
-                </div>
+            <div class="date-badge" style="background:var(--primary-color); color:white; border:none;">
+                <i class="far fa-user"></i>
+                <?= htmlspecialchars($loggedInUser) ?>
             </div>
         </div>
+    </header>
 
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-            <h3><i class="fa fa-bolt"></i> الإجراءات السريعة</h3>
-            <div class="actions-grid">
-                <?php if (hasAccess('ptw.php', 'submit')): ?>
-                <a href="PTW.php" class="action-btn">
-                    <i class="fa fa-plus"></i>
-                    <span>تصريح عمل جديد</span>
-                </a>
-                <?php endif; ?>
-
-                <?php if (hasAccess('ptw_overview.php', 'view')): ?>
-                <a href="ptw_overview.php" class="action-btn">
-                    <i class="fa fa-list"></i>
-                    <span>عرض التصاريح</span>
-                </a>
-                <?php endif; ?>
-
-                <?php if (hasAccess('dailyreport.php', 'view')): ?>
-                <a href="dailyreport.php" class="action-btn">
-                    <i class="fa fa-file-text-o"></i>
-                    <span>التقرير اليومي</span>
-                </a>
-                <?php endif; ?>
-
-                <?php if (hasAccess('ptw_analysis.php', 'view')): ?>
-                <a href="ptw_analysis.php" class="action-btn">
-                    <i class="fa fa-bar-chart"></i>
-                    <span>التحليلات</span>
-                </a>
-                <?php endif; ?>
-
-                <?php if ($userType == 1): // Admin only ?>
-                <a href="user.php" class="action-btn">
-                    <i class="fa fa-users"></i>
-                    <span>إدارة المستخدمين</span>
-                </a>
-                
-                <a href="add_user.php" class="action-btn">
-                    <i class="fa fa-user-plus"></i>
-                    <span>إضافة مستخدم</span>
-                </a>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <!-- Dashboard Row: Chart + Recent Activity -->
-        <div class="dashboard-row">
-            <!-- Chart Container -->
-            <div class="chart-container">
-                <h3><i class="fa fa-line-chart"></i> اتجاهات تصاريح العمل (آخر 6 أشهر)</h3>
-                <div class="chart-wrapper">
-                    <canvas id="ptwChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="recent-activity">
-                <h3><i class="fa fa-history"></i> الأنشطة الحديثة</h3>
-                <div class="activity-list">
-                    <?php if (empty($recent_activities)): ?>
-                        <div class="activity-item">
-                            <div class="activity-icon">
-                                <i class="fa fa-info"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-action">لا توجد أنشطة حديثة</div>
-                                <div class="activity-details">ابدأ بإنشاء تصريح عمل جديد</div>
-                            </div>
-                        </div>
-                    <?php else: ?>
-                        <?php foreach ($recent_activities as $activity): ?>
-                        <div class="activity-item">
-                            <div class="activity-icon">
-                                <i class="fa fa-<?= $activity['action'] == 'Approved' ? 'check' : ($activity['action'] == 'Finished' ? 'flag' : 'edit') ?>"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-action">
-                                    <?php
-                                    $action_ar = $activity['action'];
-                                    switch($activity['action']) {
-                                        case 'Approved': $action_ar = 'تم الموافقة'; break;
-                                        case 'Finished': $action_ar = 'تم الانتهاء'; break;
-                                        case 'Created': $action_ar = 'تم الإنشاء'; break;
-                                        case 'Updated': $action_ar = 'تم التحديث'; break;
-                                        case 'Not Completed': $action_ar = 'لم يكتمل'; break;
-                                        default: $action_ar = htmlspecialchars($activity['action']);
-                                    }
-                                    echo $action_ar;
-                                    ?>
-                                </div>
-                                <div class="activity-details">
-                                    تصريح: <?= htmlspecialchars($activity['permit_number']) ?> 
-                                    بواسطة <?= htmlspecialchars($activity['action_by']) ?>
-                                </div>
-                            </div>
-                            <div class="activity-time">
-                                <?php
-                                $date = new DateTime($activity['action_date']);
-                                $months_ar = [
-                                    'Jan' => 'يناير', 'Feb' => 'فبراير', 'Mar' => 'مارس',
-                                    'Apr' => 'أبريل', 'May' => 'مايو', 'Jun' => 'يونيو',
-                                    'Jul' => 'يوليو', 'Aug' => 'أغسطس', 'Sep' => 'سبتمبر',
-                                    'Oct' => 'أكتوبر', 'Nov' => 'نوفمبر', 'Dec' => 'ديسمبر'
-                                ];
-                                $month_en = $date->format('M');
-                                $month_ar = $months_ar[$month_en] ?? $month_en;
-                                echo $date->format('j') . ' ' . $month_ar . '، ' . $date->format('H:i');
-                                ?>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Loading indicator for stats refresh -->
-    <div class="refresh-indicator" id="refreshIndicator">
-        <i class="fa fa-refresh"></i>
-        <span>جاري تحديث الإحصائيات...</span>
-    </div>
-
-    <script>
-        // Update date and time
-        function updateDateTime() {
-            const now = new Date();
-            
-            // Arabic day names
-            const days_ar = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-            const months_ar = [
-                'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-                'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-            ];
-            
-            const day = days_ar[now.getDay()];
-            const month = months_ar[now.getMonth()];
-            const date = now.getDate();
-            const year = now.getFullYear();
-            const hours = now.getHours().toString().padStart(2, '0');
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            const seconds = now.getSeconds().toString().padStart(2, '0');
-            
-            const arabicDateTime = `${day}، ${date} ${month} ${year} - ${hours}:${minutes}:${seconds}`;
-            
-            document.getElementById('datetime').textContent = arabicDateTime;
-        }
+    <div class="dashboard-grid">
         
-        setInterval(updateDateTime, 1000);
-        updateDateTime();
+        <!-- Stats Cards -->
+        <div class="stat-card-modern">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper bg-emerald-100">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+            <div class="stat-value"><?= $stats['completed_ptw'] ?></div>
+            <div class="stat-label-modern"><?= __('completed_permits') ?></div>
+        </div>
 
-        // Animate numbers counting up
-        function animateNumber(element, target) {
-            const start = 0;
-            const duration = 1000;
-            const increment = target / (duration / 16);
-            let current = start;
+        <div class="stat-card-modern">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper bg-blue-100">
+                    <i class="fas fa-hard-hat"></i>
+                </div>
+            </div>
+            <div class="stat-value"><?= $stats['active_ptw'] ?></div>
+            <div class="stat-label-modern"><?= __('active_permits') ?></div>
+        </div>
+
+        <div class="stat-card-modern">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper bg-orange-100">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+            <div class="stat-value"><?= $stats['pending_ptw'] ?></div>
+            <div class="stat-label-modern"><?= __('pending_approval') ?></div>
+        </div>
+
+        <div class="stat-card-modern">
+            <div class="stat-header">
+                <div class="stat-icon-wrapper bg-orange-100">
+                    <i class="fas fa-file-invoice"></i>
+                </div>
+            </div>
+            <div class="stat-value"><?= $stats['today_reports'] ?></div>
+            <div class="stat-label-modern"><?= __('todays_reports') ?></div>
+        </div>
+
+        <!-- Best Safety Practices -->
+        <div class="compliance-section" style="grid-column: span 3;">
+            <div class="section-title">
+                <i class="fas fa-award" style="color: var(--primary-color);"></i>
+                <?= __('best_safety_practices') ?>
+            </div>
+            <div class="compliance-ring-container">
+                <canvas id="bestPracticesChart"></canvas>
+                <div class="compliance-score">
+                    <div class="score-value"><?= $best_project_percentage ?>%</div>
+                    <div class="score-label"><?= __('good_practices_rate') ?></div>
+                </div>
+            </div>
+            <div style="margin-top: 1rem; width: 100%;">
+                <p class="stat-label-modern" style="margin-bottom: 0.25rem;">
+                    <?= __('best_project') ?>: 
+                    <span style="color: var(--primary-color); font-weight: 700;"><?= htmlspecialchars($best_project_name) ?></span>
+                </p>
+                <p class="stat-label-modern" style="font-size: 0.75rem;">
+                    <?= __('best_practices_desc') ?>
+                </p>
+            </div>
+        </div>
+
+        <div class="compliance-section" style="grid-column: span 3;">
+            <div class="section-title">
+                <i class="fas fa-exclamation-circle" style="color: var(--danger-color);"></i>
+                <?= __('high_risk_monitoring') ?>
+            </div>
+            <div class="compliance-ring-container">
+                <canvas id="incidentResolutionChart"></canvas> <!-- Reusing ID for existing Chart logic -->
+                <div class="compliance-score">
+                    <div class="score-value"><?= $hr_compliance_rate ?>%</div>
+                    <div class="score-label"><?= __('high_risk_performance') ?></div>
+                </div>
+            </div>
+            <div style="margin-top: 1rem; width: 100%;">
+                <p class="stat-label-modern" style="margin-bottom: 0.25rem;"><?= __('top_risk_project') ?>: <span style="color: var(--danger-color); font-weight: 700;"><?= htmlspecialchars($top_hr_project) ?></span></p>
+                <p class="stat-label-modern" style="font-size: 0.75rem;"><?= __('high_risk_desc') ?></p>
+            </div>
+        </div>
+
+        <div class="compliance-section" style="grid-column: span 3;">
+            <div class="section-title">
+                <i class="fas fa-building" style="color: var(--warning-color);"></i>
+                <?= __('high_risk_monitoring') ?>
+            </div>
+            <div class="compliance-ring-container">
+                <canvas id="deptRiskChart"></canvas>
+                <div class="compliance-score">
+                    <div class="score-value"><?= $hr_compliance_rate ?>%</div>
+                    <div class="score-label"><?= __('high_risk_performance') ?></div>
+                </div>
+            </div>
+            <div style="margin-top: 1rem; width: 100%;">
+                <p class="stat-label-modern" style="margin-bottom: 0.25rem;"><?= __('top_risk_dept') ?>: <span style="color: var(--warning-color); font-weight: 700;"><?= htmlspecialchars($top_hr_dept) ?></span></p>
+                <p class="stat-label-modern" style="font-size: 0.75rem;"><?= __('dept_risk_desc') ?></p>
+            </div>
+        </div>
+
+        <div class="compliance-section" style="grid-column: span 3;">
+            <div class="section-title">
+                <i class="fas fa-users-cog" style="color: #4f7d8a;"></i>
+                <?= __('hse_user_activity') ?>
+            </div>
+            <div class="compliance-ring-container">
+                <canvas id="hseActivityChart"></canvas>
+                <div class="compliance-score">
+                    <div class="score-value"><?= $hse_activity_rate ?>%</div>
+                    <div class="score-label"><?= __('activity_rate') ?></div>
+                </div>
+            </div>
+            <div style="margin-top: 1rem; width: 100%;">
+                <p class="stat-label-modern" style="margin-bottom: 0.25rem;">
+                    <?= __('most_active_user') ?>: 
+                    <span style="color: #4f7d8a; font-weight: 700;"><?= htmlspecialchars($most_active_user) ?></span>
+                </p>
+                <p class="stat-label-modern" style="font-size: 0.75rem;">
+                    <?= __('hse_activity_desc') ?>
+                </p>
+            </div>
+        </div>
+
+        <!-- Workforce/Activity Chart -->
+        <div class="chart-section" style="grid-column: span 12;">
+            <div class="section-title">
+                <i class="fas fa-chart-line" style="color: var(--secondary-color);"></i>
+                <?= __('activity_monitoring') ?>
+            </div>
+            <div style="height: 300px; width: 100%;">
+                <canvas id="activityChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent Incidents -->
+        <div class="incident-list-container">
+            <div class="section-title">
+                <i class="fas fa-clipboard-list" style="color: var(--danger-color);"></i>
+                <?= __('recent_incidents') ?>
+            </div>
             
-            const timer = setInterval(() => {
-                current += increment;
-                if (current >= target) {
-                    current = target;
-                    clearInterval(timer);
-                }
-                element.textContent = Math.floor(current);
-            }, 16);
-        }
-
-        // Animate stat numbers on page load
-        window.addEventListener('load', () => {
-            animateNumber(document.getElementById('total-ptw'), <?= $stats['total_ptw'] ?>);
-            animateNumber(document.getElementById('pending-ptw'), <?= $stats['pending_ptw'] ?>);
-            animateNumber(document.getElementById('completed-ptw'), <?= $stats['completed_ptw'] ?>);
-            animateNumber(document.getElementById('today-reports'), <?= $stats['today_reports'] ?>);
-        });
-
-        // PTW Trend Chart
-        const ctx = document.getElementById('ptwChart').getContext('2d');
-        const monthlyData = <?= json_encode($monthly_data) ?>;
-        
-        const chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: monthlyData.map(item => item.month_ar || item.month),
-                datasets: [{
-                    label: 'تصاريح العمل المُنشأة',
-                    data: monthlyData.map(item => item.count),
-                    borderColor: '#667eea',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#667eea',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 6,
-                    pointHoverRadius: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.1)'
-                        }
-                    }
-                }
-            }
-        });
-
-        // Add hover effects to stat cards (desktop) and touch effects (mobile)
-        document.querySelectorAll('.stat-card').forEach(card => {
-            // Desktop hover effects
-            card.addEventListener('mouseenter', function() {
-                if (window.innerWidth > 768) {
-                    this.style.transform = 'translateY(-10px) scale(1.02)';
-                }
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                if (window.innerWidth > 768) {
-                    this.style.transform = 'translateY(0) scale(1)';
-                }
-            });
-
-            // Touch effects for mobile
-            card.addEventListener('touchstart', function() {
-                this.style.transform = 'scale(0.98)';
-                this.style.opacity = '0.8';
-            });
-
-            card.addEventListener('touchend', function() {
-                this.style.transform = 'scale(1)';
-                this.style.opacity = '1';
-            });
-        });
-
-        // Touch effects for action buttons
-        document.querySelectorAll('.action-btn').forEach(btn => {
-            btn.addEventListener('touchstart', function() {
-                this.style.transform = 'scale(0.98)';
-                this.style.opacity = '0.8';
-            });
-
-            btn.addEventListener('touchend', function() {
-                this.style.transform = 'scale(1)';
-                this.style.opacity = '1';
-            });
-        });
-
-        // Optimize chart for mobile
-        function optimizeChartForMobile() {
-            const chart = Chart.getChart('ptwChart');
-            if (chart && window.innerWidth <= 768) {
-                chart.options.plugins.legend.display = true;
-                chart.options.plugins.legend.position = 'bottom';
-                chart.options.scales.x.ticks.maxRotation = 45;
-                chart.options.scales.x.ticks.minRotation = 45;
-                chart.update();
-            }
-        }
-
-        // Call on resize
-        window.addEventListener('resize', optimizeChartForMobile);
-
-        // Function to refresh stats
-        function refreshStats() {
-            const indicator = document.getElementById('refreshIndicator');
-            const statNumbers = document.querySelectorAll('.stat-number');
-            
-            // Show loading indicator
-            indicator.style.display = 'flex';
-            statNumbers.forEach(stat => stat.classList.add('loading'));
-            
-            fetch('get_dashboard_stats.php')
-                .then(response => response.json())
-                .then(result => {
-                    if (result.status === 'success') {
-                        const data = result.data;
+            <?php if (count($recent_incidents) > 0): ?>
+                <?php foreach ($recent_incidents as $inc): ?>
+                    <?php 
+                        $severityClass = 'severity-low';
+                        if ($inc['risk'] == 'عالية' || $inc['risk'] == 'High') $severityClass = 'severity-high';
+                        elseif ($inc['risk'] == 'متوسطة' || $inc['risk'] == 'Medium') $severityClass = 'severity-medium';
                         
-                        // Animate number changes
-                        animateNumberChange(document.getElementById('total-ptw'), data.total_ptw);
-                        animateNumberChange(document.getElementById('pending-ptw'), data.pending_ptw);
-                        animateNumberChange(document.getElementById('completed-ptw'), data.completed_ptw);
-                        animateNumberChange(document.getElementById('today-reports'), data.today_reports);
-                    }
-                })
-                .catch(error => {
-                    console.log('Stats refresh failed:', error);
-                    // Show error briefly
-                    indicator.querySelector('span').textContent = 'فشل التحديث';
-                    setTimeout(() => {
-                        indicator.querySelector('span').textContent = 'جاري تحديث الإحصائيات...';
-                    }, 2000);
-                })
-                .finally(() => {
-                    // Hide loading indicator after delay
-                    setTimeout(() => {
-                        indicator.style.display = 'none';
-                        statNumbers.forEach(stat => stat.classList.remove('loading'));
-                    }, 1000);
-                });
-        }
+                        $statusClass = ($inc['report_status'] == 1) ? 'status-closed' : 'status-open';
+                        $statusText = ($inc['report_status'] == 1) ? __('status_resolved') : __('status_open');
+                    ?>
+                    <div class="incident-item">
+                        <div class="incident-severity <?= $severityClass ?>" title="<?= __('risk_level') ?>: <?= $inc['risk'] ?>"></div>
+                        <div class="incident-info">
+                            <div class="incident-title"><?= htmlspecialchars($inc['description']) ?></div>
+                            <div class="incident-meta">
+                                <span><i class="far fa-building"></i> <?= htmlspecialchars($inc['project_name'] ?? 'N/A') ?></span>
+                                <span><i class="far fa-calendar"></i> <?= date('Y-m-d', strtotime($inc['date'])) ?></span>
+                            </div>
+                        </div>
+                        <span class="status-pill <?= $statusClass ?>"><?= $statusText ?></span>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div style="text-align:center; padding: 2rem; color: var(--text-secondary);"><?= __('no_incidents') ?></div>
+            <?php endif; ?>
+            
+        </div>
 
-        // Function to animate number changes
-        function animateNumberChange(element, newValue) {
-            const currentValue = parseInt(element.textContent);
-            if (currentValue !== newValue) {
-                const duration = 500;
-                const steps = 10;
-                const stepValue = (newValue - currentValue) / steps;
-                let current = currentValue;
-                
-                const timer = setInterval(() => {
-                    current += stepValue;
-                    if ((stepValue > 0 && current >= newValue) || (stepValue < 0 && current <= newValue)) {
-                        current = newValue;
-                        clearInterval(timer);
-                    }
-                    element.textContent = Math.round(current);
-                }, duration / steps);
+    </div>
+
+    <!-- Quick Floating Actions -->
+    <div class="quick-actions-bar">
+        <a href="ptw_overview.php" class="action-chip">
+            <i class="fas fa-file-signature" style="color: var(--primary-color);"></i> <?= __('new_permit') ?>
+        </a>
+        <a href="dailyreport_overview.php" class="action-chip">
+            <i class="fas fa-camera" style="color: var(--secondary-color);"></i> <?= __('new_report') ?>
+        </a>
+        <a href="user.php" class="action-chip">
+            <i class="fas fa-users" style="color: var(--text-primary);"></i> <?= __('manage_users') ?>
+        </a>
+    </div>
+
+</div>
+
+<script>
+    // Font setup
+    Chart.defaults.font.family = "'Cairo', sans-serif";
+
+    // 1. Best Safety Practices Chart
+    const ctxBest = document.getElementById('bestPracticesChart').getContext('2d');
+    new Chart(ctxBest, {
+        type: 'doughnut',
+        data: {
+            labels: ['<?= __('good_practices') ?>', '<?= __('other_reports') ?>'],
+            datasets: [{
+                data: [<?= $best_project_percentage ?>, <?= 100 - $best_project_percentage ?>],
+                backgroundColor: ['#1c4d8d', '#f1f5f9'],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            cutout: '85%',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { 
+                    rtl: <?= $lang_code === 'ar' ? 'true' : 'false' ?>,
+                    bodyFont: { family: 'Cairo' },
+                    titleFont: { family: 'Cairo' }
+                }
             }
         }
+    });
 
-        // Auto-refresh stats every 30 seconds
-        setInterval(refreshStats, 30000);
-
-        // Manual refresh on click (for development/debugging)
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 'r') {
-                e.preventDefault();
-                refreshStats();
+    // 1.2 High Risk Monitoring Chart
+    const ctxInc = document.getElementById('incidentResolutionChart').getContext('2d');
+    new Chart(ctxInc, {
+        type: 'doughnut',
+        data: {
+            labels: ['<?= __('compliant') ?>', '<?= __('non_compliant') ?>'],
+            datasets: [{
+                data: [<?= $hr_compliance_rate ?>, <?= 100 - $hr_compliance_rate ?>],
+                backgroundColor: ['#f43f5e', '#f1f5f9'],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            cutout: '85%',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { 
+                    rtl: <?= $lang_code === 'ar' ? 'true' : 'false' ?>,
+                    bodyFont: { family: 'Cairo' },
+                    titleFont: { family: 'Cairo' }
+                }
             }
-        });
-    </script>
+        }
+    });
+
+    // 1.25 Dept High Risk Monitoring Chart
+    const ctxDept = document.getElementById('deptRiskChart').getContext('2d');
+    new Chart(ctxDept, {
+        type: 'doughnut',
+        data: {
+            labels: ['<?= __('compliant') ?>', '<?= __('non_compliant') ?>'],
+            datasets: [{
+                data: [<?= $hr_compliance_rate ?>, <?= 100 - $hr_compliance_rate ?>],
+                backgroundColor: ['#f59e0b', '#f1f5f9'],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            cutout: '85%',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { 
+                    rtl: <?= $lang_code === 'ar' ? 'true' : 'false' ?>,
+                    bodyFont: { family: 'Cairo' },
+                    titleFont: { family: 'Cairo' }
+                }
+            }
+        }
+    });
+
+    // 1.3 HSE User Activity Chart
+    const ctxHSE = document.getElementById('hseActivityChart').getContext('2d');
+    new Chart(ctxHSE, {
+        type: 'doughnut',
+        data: {
+            labels: ['<?= __('active_users') ?>', '<?= __('inactive_users') ?>'],
+            datasets: [{
+                data: [<?= $hse_activity_rate ?>, <?= 100 - $hse_activity_rate ?>],
+                backgroundColor: ['#4988c4', '#f1f5f9'],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            cutout: '85%',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { 
+                    rtl: <?= $lang_code === 'ar' ? 'true' : 'false' ?>,
+                    bodyFont: { family: 'Cairo' },
+                    titleFont: { family: 'Cairo' }
+                }
+            }
+        }
+    });
+
+    // 2. Activity Chart
+    const ctxAct = document.getElementById('activityChart').getContext('2d');
+    
+    let gradient = ctxAct.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(28, 77, 141, 0.4)'); 
+    gradient.addColorStop(1, 'rgba(28, 77, 141, 0.0)');
+
+    new Chart(ctxAct, {
+        type: 'line',
+        data: {
+            labels: <?= json_encode(array_reverse($months_display), JSON_UNESCAPED_UNICODE) ?>,
+            datasets: [{
+                label: '<?= __('permits_trend') ?>',
+                data: <?= json_encode(array_reverse($counts_display)) ?>,
+                borderColor: '#4988c4',
+                backgroundColor: gradient,
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: '#1c4d8d',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { 
+                    rtl: <?= $lang_code === 'ar' ? 'true' : 'false' ?>,
+                    bodyFont: { family: 'Cairo' },
+                    titleFont: { family: 'Cairo' }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#f1f5f9' },
+                    ticks: { color: '#94a3b8', font: { family: 'Cairo' } },
+                    position: '<?= $lang_code === 'ar' ? 'right' : 'left' ?>'
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#94a3b8', font: { family: 'Cairo' } }
+                }
+            }
+        }
+    });
+</script>
+
 </body>
 </html>

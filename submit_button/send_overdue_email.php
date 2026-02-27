@@ -1,6 +1,10 @@
 <?php
 // Send overdue email notification
 require_once(__DIR__ . '/../constants/auth_check.php');
+if (!hasAccess('dailyreport_analysis.php', 'send_email')) {
+    echo json_encode(['success' => false, 'message' => 'Unauthorized Access']);
+    exit;
+}
 require_once(__DIR__ . '/../constants/dbconnect.php');
 require_once(__DIR__ . '/../sendemail/vendor/autoload.php');
 
@@ -88,8 +92,22 @@ switch ($report['risk']) {
 $status = $report['closed_at'] ? 'Closed (Late)' : 'Still Open';
 
 // Get server base URL
+// Get server base URL
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-$host = $_SERVER['HTTP_HOST'];
+
+// Try to get the actual IP address instead of localhost
+if ($_SERVER['HTTP_HOST'] === 'localhost' || $_SERVER['HTTP_HOST'] === '127.0.0.1') {
+    // Try to get the local network IP
+    $local_ip = '';
+    if (function_exists('gethostbyname')) {
+        $local_ip = gethostbyname(gethostname());
+    }
+    // If we can't get IP, use a default that might work better
+    $host = $local_ip ?: '192.168.1.100'; // Replace with your actual local IP
+} else {
+    $host = $_SERVER['HTTP_HOST'];
+}
+
 $base_url = $protocol . $host;
 $link_url = $base_url . "/Edara-HSE111/dailyreport_overview.php?highlight=" . urlencode($report_id);
 
@@ -169,10 +187,10 @@ try {
     // Gmail SMTP Configuration (matching working send_email.php)
     $mail->isSMTP();
     $mail->SMTPDebug = 0;  // Disable debug to prevent breaking JSON response
-    $mail->Host       = 'smtp.gmail.com';
+    $mail->Host       = 'mail.edaraproperty.net';
     $mail->SMTPAuth   = true;
-    $mail->Username   = 'mohamedhowedy766@gmail.com';
-    $mail->Password   = 'zlvtfddathvpquwd';
+    $mail->Username   = 'noreply@edaraproperty.net';
+    $mail->Password   = 'Bmyv@%$Nz5QMB7K';
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->Port       = 465;
     $mail->Timeout    = 30;
@@ -191,16 +209,33 @@ try {
     // Add recipients
     $recipientsAdded = false;
     
-    if (!empty($report['department_email'])) {
-        $mail->addAddress($report['department_email']);
-        $recipientsAdded = true;
-        $emailsSent[] = $report['department_email'];
-    }
-    
+    // Project email (To)
     if (!empty($report['project_email'])) {
         $mail->addAddress($report['project_email']);
         $recipientsAdded = true;
-        $emailsSent[] = $report['project_email'];
+        $emailsSent[] = "To: " . $report['project_email'];
+    }
+
+    // Department email (CC)
+    if (!empty($report['department_email'])) {
+        $mail->addCC($report['department_email']);
+        $recipientsAdded = true;
+        $emailsSent[] = "CC: " . $report['department_email'];
+    }
+
+    // Fixed CC recipients
+    $fixedCCs = [
+        'Ahmed.ali@edaraproperty.net',
+        'hse.manager@edaraproperty.net',
+        'hse@edaraproperty.net',
+        'hse.east@edaraproperty.net'
+    ];
+
+    foreach ($fixedCCs as $ccEmail) {
+        $ccEmail = trim($ccEmail); // Clean any chemicals/whitespace
+        $mail->addCC($ccEmail);
+        $recipientsAdded = true;
+        $emailsSent[] = "CC: " . $ccEmail;
     }
 
     if (!$recipientsAdded) {

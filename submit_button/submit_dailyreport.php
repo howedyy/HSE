@@ -263,6 +263,19 @@ if (isset($_FILES['images']) && is_array($_FILES['images']['name'])) {
 }
 
 $images_json = json_encode($uploaded_images);
+$edit_id = isset($_POST['edit_id']) ? intval($_POST['edit_id']) : 0;
+
+// If editing and no new images, preserve old images
+if ($edit_id > 0 && empty($uploaded_images)) {
+    $existingStmt = $conn->prepare("SELECT image_upload FROM daily_report WHERE id = ?");
+    $existingStmt->bind_param("i", $edit_id);
+    $existingStmt->execute();
+    $existingResult = $existingStmt->get_result()->fetch_assoc();
+    if ($existingResult) {
+        $images_json = $existingResult['image_upload'];
+    }
+    $existingStmt->close();
+}
 
 // 🧪 Field validation
 if (
@@ -276,15 +289,35 @@ if (
     $images_json &&
     $operation_corrective
 ) {
-    $sql = "INSERT INTO daily_report (
-                date, project, department, observation,
-                work_type, risk, observation_description,
-                operation_corrective, description, image_upload, user_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-    $stmt = $conn->prepare($sql);
-
-    if ($stmt) {
+    if ($edit_id > 0) {
+        // UPDATE existing report
+        $sql = "UPDATE daily_report SET 
+                    project = ?, department = ?, observation = ?,
+                    work_type = ?, risk = ?, observation_description = ?,
+                    operation_corrective = ?, description = ?, image_upload = ?
+                WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param(
+            "issssssssi",
+            $projectname,
+            $department,
+            $observation,
+            $work_type,
+            $risk,
+            $observation_description,
+            $operation_corrective,
+            $description,
+            $images_json,
+            $edit_id
+        );
+    } else {
+        // INSERT new report
+        $sql = "INSERT INTO daily_report (
+                    date, project, department, observation,
+                    work_type, risk, observation_description,
+                    operation_corrective, description, image_upload, user_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
         $stmt->bind_param(
             "sissssssssi",
             $date,
@@ -299,141 +332,139 @@ if (
             $images_json,
             $current_user_id
         );
-
-        if ($stmt->execute()) {
-            echo "success";
-            
-            // Only send Telegram notification for high risk reports (عاليه)
-            if ($risk === "عالية") {
-                // Get the last inserted ID
-                $report_id = $conn->insert_id;
-                
-                // Get department name from department table
-                $department_name = $department; // Default to department ID if query fails
-                $deptQuery = "SELECT department_name FROM department WHERE id = ?";
-                $deptStmt = $conn->prepare($deptQuery);
-                
-                if ($deptStmt) {
-                    $deptStmt->bind_param("s", $department);
-                    $deptStmt->execute();
-                    $deptResult = $deptStmt->get_result();
-                    
-                    if ($deptResult->num_rows > 0) {
-                        $deptRow = $deptResult->fetch_assoc();
-                        $department_name = $deptRow['department_name'];
-                    }
-                    
-                    $deptStmt->close();
-                }
-                
-                // Query the project region to determine which chat ID to use
-                $regionQuery = "SELECT region FROM project WHERE id = ?";
-                $regionStmt = $conn->prepare($regionQuery);
-                
-                if (!$regionStmt) {
-                    error_log("Failed to prepare region query: " . $conn->error);
-                    // Default to west region if query fails
-                    $chatId = $westRegionChatId;
-                } else {
-                    $regionStmt->bind_param("s", $projectname);
-                    $regionStmt->execute();
-                    $regionResult = $regionStmt->get_result();
-                    
-                    if ($regionResult->num_rows > 0) {
-                        $regionRow = $regionResult->fetch_assoc();
-                        $region = $regionRow['region'];
-                        
-                        // Determine chat ID based on region
-                        if ($region == 1) {
-                            $chatId = $westRegionChatId;
-                            error_log("Sending to West Region chat for project: $projectname (region: $region)");
-                        } elseif ($region == 2) {
-                            $chatId = $eastRegionChatId;
-                            error_log("Sending to East Region chat for project: $projectname (region: $region)");
-                        } else {
-                            // Default to west region for unknown regions
-                            $chatId = $westRegionChatId;
-                            error_log("Unknown region $region for project: $projectname, defaulting to West Region");
-                        }
-                    } else {
-                        // Default to west region if project not found
-                        $chatId = $westRegionChatId;
-                        error_log("Project $projectname not found in database, defaulting to West Region");
-                    }
-                    
-                    $regionStmt->close();
-                }
-                
-                // Get project name from project table
-                $project_name = "Project #$projectname"; // Default if query fails
-                $projQuery = "SELECT project_name FROM project WHERE id = ?";
-                $projStmt = $conn->prepare($projQuery);
-                
-                if ($projStmt) {
-                    $projStmt->bind_param("s", $projectname);
-                    $projStmt->execute();
-                    $projResult = $projStmt->get_result();
-                    
-                    if ($projResult->num_rows > 0) {
-                        $projRow = $projResult->fetch_assoc();
-                        $project_name = $projRow['project_name'];
-                    }
-                    
-                    $projStmt->close();
-                }
-                
-                // Get the server hostname and protocol for link generation
-                $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-                
-                // Try to get the actual IP address instead of localhost
-                if ($_SERVER['HTTP_HOST'] === 'localhost' || $_SERVER['HTTP_HOST'] === '127.0.0.1') {
-                    // Try to get the local network IP
-                    $local_ip = '';
-                    if (function_exists('gethostbyname')) {
-                        $local_ip = gethostbyname(gethostname());
-                    }
-                    // If we can't get IP, use a default that might work better
-                    $host = $local_ip ?: '192.168.1.100'; // Replace with your actual local IP
-                } else {
-                    $host = $_SERVER['HTTP_HOST'];
-                }
-                
-                $base_url = $protocol . $host;
-                
-                // Create a properly encoded URL
-                $link_url = $base_url . "/Edara-HSE111/dailyreport_overview.php?highlight=" . urlencode($report_id);
-                
-                // Create completely plain text message with URL
-                $telegramMsg = "⚠️ HIGH RISK Daily Report Submitted ⚠️\n\n"
-                             . "🏢 Department: $department_name\n"
-                             . "🏗️ Project: $project_name\n"
-                             . "📝 Observation: $observation_description\n"
-                             . "⚠️ Risk Level: $risk\n"
-                             . "⏰ Submitted: " . date('Y-m-d H:i:s') . "\n\n"
-                             . "Link: $link_url";
-
-                // Log the message for debugging
-                error_log("Sending Telegram message to chat ID $chatId: " . $telegramMsg);
-                
-                // Send Telegram message as plain text
-                try {
-                    $telegramSuccess = sendTelegramMessage($telegramMsg, $botToken, $chatId);
-                    
-                    if (!$telegramSuccess) {
-                        error_log("Telegram notification failed at " . date('Y-m-d H:i:s'));
-                    }
-                } catch (Exception $e) {
-                    error_log("Exception when sending Telegram message: " . $e->getMessage());
-                }
-            }
-        } else {
-            echo "Error: " . $stmt->error;
-        }
-        
-        $stmt->close();
-    } else {
-        echo "Error preparing SQL: " . $conn->error;
     }
+
+    if ($stmt->execute()) {
+        echo "success";
+        
+        // Only send Telegram notification for NEW high risk reports
+        if ($edit_id == 0 && $risk === "عالية") {
+            // Get the last inserted ID
+            $report_id = $conn->insert_id;
+            
+            // Get department name from department table
+            $department_name = $department; // Default to department ID if query fails
+            $deptQuery = "SELECT department_name FROM department WHERE id = ?";
+            $deptStmt = $conn->prepare($deptQuery);
+            
+            if ($deptStmt) {
+                $deptStmt->bind_param("s", $department);
+                $deptStmt->execute();
+                $deptResult = $deptStmt->get_result();
+                
+                if ($deptResult->num_rows > 0) {
+                    $deptRow = $deptResult->fetch_assoc();
+                    $department_name = $deptRow['department_name'];
+                }
+                
+                $deptStmt->close();
+            }
+            
+            // Query the project region to determine which chat ID to use
+            $regionQuery = "SELECT region FROM project WHERE id = ?";
+            $regionStmt = $conn->prepare($regionQuery);
+            
+            if (!$regionStmt) {
+                error_log("Failed to prepare region query: " . $conn->error);
+                // Default to west region if query fails
+                $chatId = $westRegionChatId;
+            } else {
+                $regionStmt->bind_param("s", $projectname);
+                $regionStmt->execute();
+                $regionResult = $regionStmt->get_result();
+                
+                if ($regionResult->num_rows > 0) {
+                    $regionRow = $regionResult->fetch_assoc();
+                    $region = $regionRow['region'];
+                    
+                    // Determine chat ID based on region
+                    if ($region == 1) {
+                        $chatId = $westRegionChatId;
+                        error_log("Sending to West Region chat for project: $projectname (region: $region)");
+                    } elseif ($region == 2) {
+                        $chatId = $eastRegionChatId;
+                        error_log("Sending to East Region chat for project: $projectname (region: $region)");
+                    } else {
+                        // Default to west region for unknown regions
+                        $chatId = $westRegionChatId;
+                        error_log("Unknown region $region for project: $projectname, defaulting to West Region");
+                    }
+                } else {
+                    // Default to west region if project not found
+                    $chatId = $westRegionChatId;
+                    error_log("Project $projectname not found in database, defaulting to West Region");
+                }
+                
+                $regionStmt->close();
+            }
+            
+            // Get project name from project table
+            $project_name = "Project #$projectname"; // Default if query fails
+            $projQuery = "SELECT project_name FROM project WHERE id = ?";
+            $projStmt = $conn->prepare($projQuery);
+            
+            if ($projStmt) {
+                $projStmt->bind_param("s", $projectname);
+                $projStmt->execute();
+                $projResult = $projStmt->get_result();
+                
+                if ($projResult->num_rows > 0) {
+                    $projRow = $projResult->fetch_assoc();
+                    $project_name = $projRow['project_name'];
+                }
+                
+                $projStmt->close();
+            }
+            
+            // Get the server hostname and protocol for link generation
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+            
+            // Try to get the actual IP address instead of localhost
+            if ($_SERVER['HTTP_HOST'] === 'localhost' || $_SERVER['HTTP_HOST'] === '127.0.0.1') {
+                // Try to get the local network IP
+                $local_ip = '';
+                if (function_exists('gethostbyname')) {
+                    $local_ip = gethostbyname(gethostname());
+                }
+                // If we can't get IP, use a default that might work better
+                $host = $local_ip ?: '192.168.1.100'; // Replace with your actual local IP
+            } else {
+                $host = $_SERVER['HTTP_HOST'];
+            }
+            
+            $base_url = $protocol . $host;
+            
+            // Create a properly encoded URL
+            $link_url = $base_url . "/Edara-HSE111/dailyreport_overview.php?highlight=" . urlencode($report_id);
+            
+            // Create completely plain text message with URL
+            $telegramMsg = "⚠️ HIGH RISK Daily Report Submitted ⚠️\n\n"
+                          . "🏢 Department: $department_name\n"
+                          . "🏗️ Project: $project_name\n"
+                          . "📝 Observation: $observation_description\n"
+                          . "⚠️ Risk Level: $risk\n"
+                          . "⏰ Submitted: " . date('Y-m-d H:i:s') . "\n\n"
+                          . "Link: $link_url";
+
+            // Log the message for debugging
+            error_log("Sending Telegram message to chat ID $chatId: " . $telegramMsg);
+            
+            // Send Telegram message as plain text
+            try {
+                $telegramSuccess = sendTelegramMessage($telegramMsg, $botToken, $chatId);
+                
+                if (!$telegramSuccess) {
+                    error_log("Telegram notification failed at " . date('Y-m-d H:i:s'));
+                }
+            } catch (Exception $e) {
+                error_log("Exception when sending Telegram message: " . $e->getMessage());
+            }
+        }
+    } else {
+        echo "Error: " . $stmt->error;
+    }
+    
+    $stmt->close();
 } else {
     echo "All fields are required.";
 }

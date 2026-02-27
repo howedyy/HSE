@@ -320,6 +320,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->bind_param("sssssssssssssssss", $editor_name, $job_title, $department, $project_name, $work_location, $permit_number, $permit_date, $start_time, $end_time, $work_description, $tools_equipment, $company_name, $execution_manager_signature, $admin_signature, $operation_type, $risk_assessment, $safety_measures);
 
     if ($stmt->execute()) {
+        // Handle optional image upload
+        if (isset($_FILES['attachment_image']) && $_FILES['attachment_image']['error'] == 0) {
+            $uploadedFile = $_FILES['attachment_image'];
+            $uploadDir = __DIR__ . '/../assests/uploads/ptw_closure/';
+            
+            // Ensure directory exists
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+
+            // Generate unique filename
+            $extension = pathinfo($uploadedFile['name'], PATHINFO_EXTENSION);
+            $newFilename = time() . '_' . uniqid() . '_attachment.' . $extension;
+            $targetFile = $uploadDir . $newFilename;
+            
+            if (move_uploaded_file($uploadedFile['tmp_name'], $targetFile)) {
+                // Insert into ptw_images
+                // We use 'attachment' as the type for initial attachments
+                $imgSql = "INSERT INTO ptw_images (permit_number, image_path, image_type) VALUES (?, ?, 'attachment')";
+                $imgStmt = $conn->prepare($imgSql);
+                if ($imgStmt) {
+                    $imgStmt->bind_param("ss", $permit_number, $newFilename);
+                    $imgStmt->execute();
+                    $imgStmt->close();
+                } else {
+                    error_log("Failed to prepare ptw_images insert: " . $conn->error);
+                }
+            } else {
+                error_log("Failed to move uploaded file to $targetFile");
+            }
+        }
+
         // Query the project region to determine which chat ID to use
         $regionQuery = "SELECT region FROM project WHERE project_name = ?";
         $regionStmt = $conn->prepare($regionQuery);
@@ -403,6 +435,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                      . "🏗️ Project Name: $project_name\n"
                      . "📍 Work Location: $work_location\n"
                      . "🔢 Permit Number: $permit_number\n"
+                     . "⏰ Work Description: $work_description\n"
+                     . "⏰ Tools and Equipment: $tools_equipment\n"
                      . "⏰ Submitted: " . date('Y-m-d H:i:s') . "\n\n"
                      . "Link: $link_url";
 

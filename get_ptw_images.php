@@ -10,39 +10,48 @@ if (!isset($_GET['permit_number'])) {
 
 $permit_number = $_GET['permit_number'];
 
-// Query to get non-compliance images for this PTW
-$sql = "SELECT image_path FROM ptw_images WHERE permit_number = ? AND image_type = 'noncompliance' ORDER BY id ASC";
+// Query to get all images for this PTW
+$sql = "SELECT image_path, image_type FROM ptw_images WHERE permit_number = ? ORDER BY id ASC";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $permit_number);
 $stmt->execute();
 $result = $stmt->get_result();
 
-if ($result->num_rows > 0) {
-    echo '<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">';
-    
-    while ($row = $result->fetch_assoc()) {
-        $imagePath = htmlspecialchars($row['image_path']);
-        
-        // Handle both old format (full path) and new format (filename only)
-        if (strpos($imagePath, 'assests/uploads/ptw_closure/') === 0) {
-            // Old format: already has full path
-            $webPath = ltrim($imagePath, '/');
-        } else {
-            // New format: filename only, add path prefix
-            $webPath = 'assests/uploads/ptw_closure/' . ltrim($imagePath, '/');
-        }
-        
-        echo '<div style="position: relative;">';
-        echo '<img src="' . $webPath . '" alt="Non-compliance Image" 
-               style="max-width: 150px; max-height: 150px; border: 2px solid #ddd; 
-                      border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
-                      transition: transform 0.3s ease; cursor: pointer;"
-               onclick="openImageModal(\'' . $webPath . '\')"
-               onmouseover="this.style.transform=\'scale(1.1)\'"
-               onmouseout="this.style.transform=\'scale(1)\'" />';
-        echo '</div>';
+$attachments = [];
+$nonCompliance = [];
+
+while ($row = $result->fetch_assoc()) {
+    $imagePath = htmlspecialchars($row['image_path']);
+    if ($row['image_type'] == 'noncompliance') {
+        $nonCompliance[] = $imagePath;
+    } else {
+        $attachments[] = $imagePath;
     }
-    
+}
+
+if (empty($attachments) && empty($nonCompliance)) {
+    echo '<div class="no-images">No images found for this PTW</div>';
+} else {
+    echo '<div style="display: flex; flex-direction: column; gap: 15px;">';
+
+    if (!empty($attachments)) {
+        echo '<div><h5 style="margin: 5px 0; color: #555; border-bottom: 1px solid #eee;">General Attachments</h5>';
+        echo '<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">';
+        foreach ($attachments as $path) {
+            renderImage($path);
+        }
+        echo '</div></div>';
+    }
+
+    if (!empty($nonCompliance)) {
+        echo '<div><h5 style="margin: 5px 0; color: #d32f2f; border-bottom: 1px solid #eee;">Non-Compliance Images</h5>';
+        echo '<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">';
+        foreach ($nonCompliance as $path) {
+            renderImage($path);
+        }
+        echo '</div></div>';
+    }
+
     echo '</div>';
     
     // Add image modal HTML
@@ -78,11 +87,26 @@ if ($result->num_rows > 0) {
         }
     });
     </script>';
-    
-} else {
-    echo '<div class="no-images">No non-compliance images found for this PTW</div>';
 }
 
 $stmt->close();
 $conn->close();
+
+function renderImage($imagePath) {
+    if (strpos($imagePath, 'assests/uploads/ptw_closure/') === 0) {
+        $webPath = ltrim($imagePath, '/');
+    } else {
+        $webPath = 'assests/uploads/ptw_closure/' . ltrim($imagePath, '/');
+    }
+    
+    echo '<div style="position: relative;">';
+    echo '<img src="' . $webPath . '" alt="PTW Image" 
+           style="max-width: 150px; max-height: 150px; border: 2px solid #ddd; 
+                  border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+                  transition: transform 0.3s ease; cursor: pointer;"
+           onclick="openImageModal(\'' . $webPath . '\')"
+           onmouseover="this.style.transform=\'scale(1.1)\'"
+           onmouseout="this.style.transform=\'scale(1)\'" />';
+    echo '</div>';
+}
 ?>
