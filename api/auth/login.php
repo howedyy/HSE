@@ -12,52 +12,54 @@ if (empty($username) || empty($password)) {
     exit();
 }
 
+// Temporary Logging for Debugging
+file_put_contents(__DIR__ . '/login_debug.log', 
+    "[" . date('Y-m-d H:i:s') . "] Attempt - Username: [$username], Password: [$password]\n", 
+    FILE_APPEND);
+
 // Security Check
 $stmt = $conn->prepare("SELECT id, username, password, user_type, editor_name, job_title FROM users WHERE username = ?");
 $stmt->bind_param("s", $username);
 $stmt->execute();
 $result = $stmt->get_result();
 
-if ($result->num_rows == 1) {
+if ($result->num_rows >= 1) {
     $user = $result->fetch_assoc();
     
-    // Support both hashed and plain passwords during migration
-    if (password_verify($password, $user['password']) || $password == $user['password']) {
-        
+    $is_password_correct = password_verify($password, $user['password']) || $password == $user['password'];
+    
+    // Log detailed result
+    file_put_contents(__DIR__ . '/login_debug.log', 
+        "[" . date('Y-m-d H:i:s') . "] User Found: {$user['username']}, Password Match: " . ($is_password_correct ? 'YES' : 'NO') . "\n", 
+        FILE_APPEND);
+
+    if ($is_password_correct) {
         // Setup Session
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['user_type'] = $user['user_type'];
         
-        // Fetch REAL permissions from role_type_permissions
+        // Fetch permissions... (omitted for brevity in replace, but keeping original structure)
         $permissions = [];
         $pstmt = $conn->prepare("SELECT page, action FROM role_type_permissions WHERE role_type = ?");
         $pstmt->bind_param("i", $user['user_type']);
         $pstmt->execute();
         $pResult = $pstmt->get_result();
         while ($pRow = $pResult->fetch_assoc()) {
-            $permissions[] = [
-                'page' => $pRow['page'],
-                'action' => $pRow['action'],
-            ];
+            $permissions[] = ['page' => $pRow['page'], 'action' => $pRow['action']];
         }
         $pstmt->close();
         
-        // Also fetch user-specific permissions
         $upstmt = $conn->prepare("SELECT page, action FROM role_permissions WHERE user_id = ?");
         $upstmt->bind_param("i", $user['id']);
         $upstmt->execute();
         $upResult = $upstmt->get_result();
         while ($upRow = $upResult->fetch_assoc()) {
-            $permissions[] = [
-                'page' => $upRow['page'],
-                'action' => $upRow['action'],
-            ];
+            $permissions[] = ['page' => $upRow['page'], 'action' => $upRow['action']];
         }
         $upstmt->close();
 
-        // Prepare Response
-        $response = [
+        echo json_encode([
             "success" => true,
             "user" => [
                 "id" => (int)$user['id'],
@@ -68,16 +70,14 @@ if ($result->num_rows == 1) {
             ],
             "permissions" => $permissions,
             "token" => session_id()
-        ];
-        
-        echo json_encode($response, JSON_UNESCAPED_UNICODE);
+        ], JSON_UNESCAPED_UNICODE);
     } else {
         http_response_code(401);
-        echo json_encode(["message" => "Incorrect password."]);
+        echo json_encode(["message" => "Incorrect password for user '$username'."]);
     }
 } else {
     http_response_code(401);
-    echo json_encode(["message" => "User does not exist."]);
+    echo json_encode(["message" => "User '$username' not found in database."]);
 }
 
 $stmt->close();

@@ -32,8 +32,8 @@ $stmt->close();
 // Fetch
 $sql = "SELECT dr.id, dr.date, pr.project_name, dp.department_name, dr.work_type, dr.risk,
         dr.observation_description, dr.description, dr.observation, dr.operation_corrective,
-        dr.report_status, dr.closed_at, dr.image_upload, u.username as created_by,
-        u2.username as closed_by_username
+        dr.report_status, dr.closed_at, dr.image_upload, dr.closure_notes, dr.closure_image,
+        u.username as created_by, u2.username as closed_by_username
         FROM daily_report dr
         LEFT JOIN project pr ON dr.project = pr.id
         LEFT JOIN department dp ON dr.department = dp.id

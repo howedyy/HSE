@@ -1,0 +1,5 @@
+[2026-03-01 11:44:35] Attempt - Username: [mohamed], Password: [123]
+[2026-03-01 11:52:24] Attempt - Username: [mohamed], Password: [123456]
+[2026-03-01 11:52:24] User Found: mohamed, Password Match: YES
+[2026-03-01 11:59:26] Attempt - Username: [mohamed], Password: [123456]
+[2026-03-01 11:59:26] User Found: mohamed, Password Match: YES

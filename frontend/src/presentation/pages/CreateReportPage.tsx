@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useLookups } from '../../application/hooks/useLookups';
 import { useAuth } from '../context/AuthContext';
 import api from '../../infrastructure/api/client';
-import { FileText, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
+import { FileText, ArrowLeft, CheckCircle, Loader2, Image as ImageIcon, X, AlertCircle } from 'lucide-react';
+import { compressImage } from '../../shared/utils/imageCompression';
 
 const workTypeMapping: Record<string, string[]> = {
     "متابعه الاعمال": [
@@ -37,6 +38,8 @@ const CreateReportPage: React.FC = () => {
     const [submitting, setSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState('');
+    const [images, setImages] = useState<File[]>([]);
+    const [compressing, setCompressing] = useState(false);
 
     // RBAC: Only users with dailyreport.php submit permission can access this
     if (!hasPermission('dailyreport.php', 'submit')) {
@@ -53,12 +56,37 @@ const CreateReportPage: React.FC = () => {
 
     const set = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }));
 
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files) return;
+        setCompressing(true);
+        const files = Array.from(e.target.files);
+        const compressed = await Promise.all(
+            files.map(f => compressImage(f))
+        );
+        setImages(prev => [...prev, ...compressed]);
+        setCompressing(false);
+    };
+
+    const removeImage = (index: number) => {
+        setImages(prev => prev.filter((_, i) => i !== index));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
         setError('');
         try {
-            await api.post('/reports/submit', form);
+            const formData = new FormData();
+            Object.entries(form).forEach(([key, value]) => {
+                formData.append(key, value);
+            });
+            images.forEach(img => {
+                formData.append('images[]', img);
+            });
+
+            await api.post('/reports/submit', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
             setSuccess(true);
             setTimeout(() => navigate('/reports'), 1500);
         } catch (err: any) {
@@ -169,7 +197,42 @@ const CreateReportPage: React.FC = () => {
                         <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={4} className={`${selectClass} resize-none`} placeholder="Enter additional observations..." />
                     </div>
 
-                    <button type="submit" disabled={submitting} className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
+                    <div className="space-y-3">
+                        <label className={labelClass}>Observation Images (صور الملاحظة)</label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            {images.map((img, idx) => (
+                                <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-gray-200">
+                                    <img src={URL.createObjectURL(img)} alt="preview" className="w-full h-full object-cover" />
+                                    <button
+                                        type="button"
+                                        onClick={() => removeImage(idx)}
+                                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <X size={12} />
+                                    </button>
+                                </div>
+                            ))}
+                            <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all">
+                                <ImageIcon size={24} className="text-gray-400" />
+                                <span className="text-[10px] font-medium text-gray-500 text-center px-2">
+                                    {compressing ? 'Compressing...' : 'Add Images'}
+                                </span>
+                                <input
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    className="hidden"
+                                    disabled={compressing}
+                                />
+                            </label>
+                        </div>
+                        <p className="text-[11px] text-gray-400 flex items-center gap-1">
+                            <AlertCircle size={12} /> Images will be automatically optimized for upload.
+                        </p>
+                    </div>
+
+                    <button type="submit" disabled={submitting || compressing} className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
                         {submitting ? <><Loader2 size={18} className="animate-spin" /> Submitting...</> : 'Submit Report'}
                     </button>
                 </form>

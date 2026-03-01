@@ -5,7 +5,7 @@ import type { ReportListResponse } from '../../domain/entities/DailyReport';
 export const useDailyReports = (filters: Record<string, string> = {}, page = 1) => {
     const params = new URLSearchParams({ ...filters, page: String(page), limit: '20' });
 
-    const { data, isLoading, error } = useQuery<ReportListResponse>({
+    const { data, isLoading, error, refetch } = useQuery<ReportListResponse>({
         queryKey: ['daily-reports', filters, page],
         queryFn: () => api.get(`/reports/list?${params.toString()}`),
     });
@@ -17,5 +17,6 @@ export const useDailyReports = (filters: Record<string, string> = {}, page = 1) 
         currentPage: data?.page ?? 1,
         isLoading,
         error,
+        refetch,
     };
 };
