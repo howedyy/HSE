@@ -3,6 +3,7 @@ import MainLayout from './presentation/layouts/MainLayout';
 import DashboardPage from './presentation/pages/DashboardPage';
 import DailyReportPage from './presentation/pages/DailyReportPage';
 import CreateReportPage from './presentation/pages/CreateReportPage';
+import EditReportPage from './presentation/pages/EditReportPage';
 import PTWPage from './presentation/pages/PTWPage';
 import CreatePTWPage from './presentation/pages/CreatePTWPage';
 import UserManagementPage from './presentation/pages/UserManagementPage';
@@ -26,6 +27,7 @@ function App() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/reports" element={<DailyReportPage />} />
             <Route path="/reports/new" element={<CreateReportPage />} />
+            <Route path="/reports/edit/:id" element={<EditReportPage />} />
             <Route path="/permits" element={<PTWPage />} />
             <Route path="/permits/new" element={<CreatePTWPage />} />
             <Route path="/users" element={<UserManagementPage />} />

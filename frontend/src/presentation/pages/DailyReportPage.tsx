@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../../infrastructure/api/client';
 import {
     FileText, Filter, ChevronLeft, ChevronRight,
-    CheckCircle, Clock, Search, X, Plus, Eye, Trash2, Loader2, Image as ImageIcon
+    CheckCircle, Clock, Search, X, Plus, Eye, Trash2, Loader2, Image as ImageIcon, Mail, Check, Pencil
 } from 'lucide-react';
 import { compressImage } from '../../shared/utils/imageCompression';
 
@@ -23,7 +23,7 @@ const statusBadge = (status: number) =>
 
 const DailyReportPage: React.FC = () => {
     const navigate = useNavigate();
-    const { hasPermission } = useAuth();
+    const { hasPermission, user } = useAuth();
     const [page, setPage] = useState(1);
     const [filters, setFilters] = useState<Record<string, string>>({});
     const [showFilters, setShowFilters] = useState(false);
@@ -33,12 +33,14 @@ const DailyReportPage: React.FC = () => {
     const [closureImage, setClosureImage] = useState<File | null>(null);
     const [isSubmittingClosure, setIsSubmittingClosure] = useState(false);
     const [isCompressing, setIsCompressing] = useState(false);
+    const [isEmailing, setIsEmailing] = useState<number | null>(null);
 
     const { reports, total, totalPages, isLoading, refetch } = useDailyReports(filters, page);
     const { projects, departments } = useLookups();
     const canSubmit = hasPermission('dailyreport.php', 'submit');
     const canDelete = hasPermission('dailyreport_overview.php', 'delete');
     const canClose = hasPermission('dailyreport_overview.php', 'submit');
+    const canSendEmail = hasPermission('dailyreport_overview.php', 'send_email');
 
     const updateFilter = (key: string, value: string) => {
         setPage(1);
@@ -58,6 +60,30 @@ const DailyReportPage: React.FC = () => {
             refetch();
         } catch (err: any) {
             alert(err.response?.data?.message || 'Delete failed');
+        }
+    };
+
+    const handleSendEmail = async (id: number) => {
+        if (!window.confirm('Are you sure you want to send the observation report via email?')) return;
+
+        setIsEmailing(id);
+        try {
+            // response is already .data due to axios interceptor in client.ts
+            const response: any = await api.post('/reports/send_email', { report_id: id });
+
+            if (response.success) {
+                alert('Success: Email has been sent successfully.');
+                refetch();
+            } else {
+                alert('Dispatch failed: ' + (response.message || 'Unknown error'));
+            }
+        } catch (err: any) {
+            console.error('Email Dispatch Error:', err);
+            // Handle error response via interceptor or directly
+            const errorMsg = err.response?.data?.message || err.message || 'Connection failed';
+            alert('Error: ' + errorMsg);
+        } finally {
+            setIsEmailing(null);
         }
     };
 
@@ -193,6 +219,31 @@ const DailyReportPage: React.FC = () => {
                                                     <Eye size={16} />
                                                 </button>
 
+                                                {((user?.id === r.user_id) || (user?.role === 1)) && r.report_status === 0 && (
+                                                    <button
+                                                        onClick={() => navigate(`/reports/edit/${r.id}`)}
+                                                        className="p-2 text-amber-600 hover:bg-amber-50 rounded-xl transition-colors"
+                                                        title="Edit Report"
+                                                    >
+                                                        <Pencil size={16} />
+                                                    </button>
+                                                )}
+
+                                                {canSendEmail && (
+                                                    <button
+                                                        onClick={() => handleSendEmail(r.id)}
+                                                        disabled={r.email_sent === 1 || isEmailing === r.id}
+                                                        className={`p-2 rounded-xl transition-colors ${r.email_sent === 1
+                                                            ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                                                            : 'text-indigo-600 hover:bg-indigo-50'
+                                                            }`}
+                                                        title={r.email_sent === 1 ? 'Mail Sent' : 'Send Email'}
+                                                    >
+                                                        {isEmailing === r.id ? <Loader2 size={16} className="animate-spin" /> :
+                                                            r.email_sent === 1 ? <Check size={14} /> : <Mail size={16} />}
+                                                    </button>
+                                                )}
+
                                                 {r.report_status === 0 && canClose && (
                                                     <button
                                                         onClick={() => {
@@ -279,11 +330,37 @@ const DailyReportPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Observation Body */}
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-bold text-gray-900">Observation Report</h3>
-                                <div className="bg-gray-50 rounded-2xl p-6 text-gray-700 leading-relaxed border border-gray-100 whitespace-pre-wrap">
-                                    {selectedReport.description || 'No detailed description provided.'}
+                            {/* Observation Details */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-bold text-gray-900">Observation Report</h3>
+                                    <div className="bg-gray-50 rounded-2xl p-6 text-gray-700 leading-relaxed border border-gray-100 whitespace-pre-wrap">
+                                        <div className="grid grid-cols-1 gap-4 text-sm">
+                                            <div>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Type (طبيعه العمل)</p>
+                                                <p className="font-semibold text-gray-900">{selectedReport.observation}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Description (وصف العمل)</p>
+                                                <p className="font-semibold text-gray-900">{selectedReport.work_type}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white rounded-2xl p-6 text-gray-700 leading-relaxed border border-gray-100 whitespace-pre-wrap">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Detailed Observation (ملاحظات)</p>
+                                        {selectedReport.description || 'No detailed description provided.'}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-bold text-gray-900">Safety Compliance</h3>
+                                    <div className="bg-gray-50 rounded-2xl p-6 text-gray-700 border border-gray-100 italic">
+                                        <p className="text-sm font-bold text-gray-900 underline mb-3 text-center">{selectedReport.observation_description}</p>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Corrective Action (الاجراء)</p>
+                                            <p className="font-semibold text-gray-900">{selectedReport.operation_corrective}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
