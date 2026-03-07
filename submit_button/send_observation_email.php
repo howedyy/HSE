@@ -1,7 +1,23 @@
 <?php
+// CORS Headers — Dynamic localhost port matching for development
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (preg_match('/^http:\/\/localhost:\d+$/', $origin)) {
+    header("Access-Control-Allow-Origin: " . $origin);
+}
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Allow-Credentials: true");
+
+// Handle Preflight (OPTIONS) requests
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
 // Send observation email notification
 require_once(__DIR__ . '/../constants/auth_check.php');
 if (!hasAccess('dailyreport_overview.php', 'send_email')) {
+    header('Content-Type: application/json');
     echo json_encode(['success' => false, 'message' => 'Unauthorized Access']);
     exit;
 }

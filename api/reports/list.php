@@ -33,6 +33,7 @@ $stmt->close();
 $sql = "SELECT dr.id, dr.date, pr.project_name, dp.department_name, dr.work_type, dr.risk,
         dr.observation_description, dr.description, dr.observation, dr.operation_corrective,
         dr.report_status, dr.closed_at, dr.image_upload, dr.closure_notes, dr.closure_image,
+        dr.email_sent, dr.user_id,
         u.username as created_by, u2.username as closed_by_username
         FROM daily_report dr
         LEFT JOIN project pr ON dr.project = pr.id
