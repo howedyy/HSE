@@ -62,6 +62,12 @@ const EditReportPage: React.FC = () => {
                     return;
                 }
 
+                if (report.email_sent === 1) {
+                    setError("This report cannot be edited because an email has already been dispatched.");
+                    setLoading(false);
+                    return;
+                }
+
                 setForm({
                     project: report.project,
                     department: report.department,

@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom
 import MainLayout from './presentation/layouts/MainLayout';
 import DashboardPage from './presentation/pages/DashboardPage';
 import DailyReportPage from './presentation/pages/DailyReportPage';
+import AnalyticsPage from './presentation/pages/AnalyticsPage';
 import CreateReportPage from './presentation/pages/CreateReportPage';
 import EditReportPage from './presentation/pages/EditReportPage';
 import PTWPage from './presentation/pages/PTWPage';
@@ -26,6 +27,7 @@ function App() {
           }>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/reports" element={<DailyReportPage />} />
+            <Route path="/reports/analytics" element={<AnalyticsPage />} />
             <Route path="/reports/new" element={<CreateReportPage />} />
             <Route path="/reports/edit/:id" element={<EditReportPage />} />
             <Route path="/permits" element={<PTWPage />} />

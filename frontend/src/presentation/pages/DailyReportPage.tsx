@@ -435,6 +435,16 @@ const DailyReportPage: React.FC = () => {
                                 </div>
                             )}
                         </div>
+
+                        {/* Bottom Close Button */}
+                        <div className="p-8 border-t border-gray-100 bg-gray-50 flex justify-end">
+                            <button
+                                onClick={() => setSelectedReport(null)}
+                                className="px-6 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-colors shadow-lg shadow-gray-200"
+                            >
+                                Close Details
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

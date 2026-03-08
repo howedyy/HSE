@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { NavLink } from 'react-router-dom';
 import {
     LayoutDashboard, FileText, ClipboardCheck,
-    Settings, LogOut, Bell, ShieldCheck, Users
+    Settings, LogOut, Bell, ShieldCheck, Users, BarChart2
 } from 'lucide-react';
 
 interface Props {
@@ -41,6 +41,7 @@ const MainLayout: React.FC<Props> = ({ children }) => {
                 <nav className="flex-1 px-3 py-4 space-y-1">
                     <SidebarLink to="/" icon={<LayoutDashboard size={18} />} label="Dashboard" />
                     <SidebarLink to="/reports" icon={<FileText size={18} />} label="Daily Reports" />
+                    <SidebarLink to="/reports/analytics" icon={<BarChart2 size={18} />} label="Reports Analytics" />
                     <SidebarLink to="/permits" icon={<ClipboardCheck size={18} />} label="PTW Permits" />
 
                     {/* Admin-only links */}
