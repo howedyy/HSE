@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { LogIn, ShieldCheck, Mail, Lock, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const LoginPage: React.FC = () => {
+    const { t } = useTranslation();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
@@ -25,7 +27,7 @@ const LoginPage: React.FC = () => {
         try {
             await login({ username, password });
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Invalid username or password. Please try again.');
+            setError(err.response?.data?.message || t('login.error'));
         } finally {
             setLoading(false);
         }
@@ -50,8 +52,8 @@ const LoginPage: React.FC = () => {
                         <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-500/30">
                             <ShieldCheck size={32} className="text-white" />
                         </div>
-                        <h1 className="text-3xl font-bold text-white tracking-tight">Edara HSE</h1>
-                        <p className="text-gray-400 mt-2 text-center text-sm">Enterprise Health, Safety & Environment Management</p>
+                        <h1 className="text-3xl font-bold text-white tracking-tight">{t('login.title')}</h1>
+                        <p className="text-gray-400 mt-2 text-center text-sm">{t('login.subtitle')}</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
@@ -67,7 +69,7 @@ const LoginPage: React.FC = () => {
                         )}
 
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">Username</label>
+                            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">{t('login.username')}</label>
                             <div className="relative group">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-blue-500 transition-colors">
                                     <Mail size={18} />
@@ -85,8 +87,8 @@ const LoginPage: React.FC = () => {
 
                         <div className="space-y-2">
                             <div className="flex justify-between items-center ml-1">
-                                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Password</label>
-                                <a href="#" className="text-xs text-blue-500 hover:text-blue-400 transition-colors">Forgot Password?</a>
+                                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t('login.password')}</label>
+                                <a href="#" className="text-xs text-blue-500 hover:text-blue-400 transition-colors">{t('login.forgotPassword')}</a>
                             </div>
                             <div className="relative group">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-blue-500 transition-colors">
@@ -113,15 +115,15 @@ const LoginPage: React.FC = () => {
                             ) : (
                                 <>
                                     <LogIn size={20} />
-                                    Sign In to Dashboard
+                                    {t('login.signIn')}
                                 </>
                             )}
                         </button>
                     </form>
 
                     <p className="mt-8 text-center text-xs text-gray-500">
-                        Secure login with end-to-end encryption. <br />
-                        © 2026 Edara Systems. All rights reserved.
+                        {t('login.footer1')} <br />
+                        {t('login.footer2')}
                     </p>
                 </div>
             </motion.div>

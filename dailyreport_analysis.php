@@ -10,14 +10,35 @@ mysqli_set_charset($conn, "utf8mb4");
 //  Filters
 $selectedProject = $_GET['project'] ?? '';
 $selectedDepartment = $_GET['department'] ?? '';
+$selectedCreatedBy = $_GET['created_by'] ?? '';
+$selectedRisk = $_GET['risk'] ?? '';
+$selectedStatus = $_GET['status'] ?? '';
+$startDate = $_GET['startDate'] ?? '';
+$endDate = $_GET['endDate'] ?? '';
 
 $filterConditions = [];
 if ($selectedProject !== '') {
-  $filterConditions[] = "project = " . intval($selectedProject);
+  $filterConditions[] = "dr.project = " . intval($selectedProject);
 }
 if ($selectedDepartment !== '') {
-  $filterConditions[] = "department = " . intval($selectedDepartment);
+  $filterConditions[] = "dr.department = " . intval($selectedDepartment);
 }
+if ($selectedCreatedBy !== '') {
+  $filterConditions[] = "dr.user_id = " . intval($selectedCreatedBy);
+}
+if ($selectedRisk !== '') {
+  $filterConditions[] = "dr.risk = '" . mysqli_real_escape_string($conn, $selectedRisk) . "'";
+}
+if ($selectedStatus !== '') {
+  $filterConditions[] = "dr.report_status = " . intval($selectedStatus);
+}
+if ($startDate !== '') {
+  $filterConditions[] = "dr.date >= '" . mysqli_real_escape_string($conn, $startDate) . " 00:00:00'";
+}
+if ($endDate !== '') {
+  $filterConditions[] = "dr.date <= '" . mysqli_real_escape_string($conn, $endDate) . " 23:59:59'";
+}
+
 $whereClause = count($filterConditions) ? "WHERE " . implode(' AND ', $filterConditions) : '';
 
 function runQuery($conn, $sql, $label)
@@ -48,7 +69,8 @@ while ($row = $deptResult->fetch_assoc()) {
 //  Risks
 $riskResult = runQuery($conn, "
   SELECT risk, COUNT(*) as count
-  FROM daily_report $whereClause
+  FROM daily_report dr
+  $whereClause
   GROUP BY risk
 ", "Risk");
 
@@ -64,9 +86,10 @@ $riskPercentages = $totalRisks > 0 ? array_map(function ($count) use ($totalRisk
 
 //  Dates
 $dateResult = runQuery($conn, "
-  SELECT date, COUNT(*) as count
-  FROM daily_report $whereClause
-  GROUP BY date
+  SELECT DATE(date) as date, COUNT(*) as count
+  FROM daily_report dr
+  $whereClause
+  GROUP BY DATE(date)
   ORDER BY date
 ", "Date");
 
@@ -294,13 +317,33 @@ $overdueCount = count($overdueReports);
     }
 
     .filter-form {
-      text-align: center;
-      margin: 20px auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
     }
 
-    .filter-form select {
-      padding: 6px 10px;
-      margin: 0 10px;
+    .filter-form label {
+      font-weight: bold;
+      color: #555;
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 5px;
+    }
+
+    .filter-form select, .filter-form input {
+      padding: 8px 12px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      font-size: 13px;
+      min-width: 150px;
     }
 
     /* Expand/Collapse Button Styles */
@@ -675,6 +718,14 @@ $overdueCount = count($overdueReports);
   <h2>📊 Daily Report Analytics</h2>
 
   <form method="GET" class="filter-form">
+    <label>Start Date:
+      <input type="date" name="startDate" value="<?= htmlspecialchars($startDate) ?>" onchange="this.form.submit()">
+    </label>
+    
+    <label>End Date:
+      <input type="date" name="endDate" value="<?= htmlspecialchars($endDate) ?>" onchange="this.form.submit()">
+    </label>
+
     <label>Project:
       <select name="project" onchange="this.form.submit()">
         <option value="">All Projects</option>
@@ -699,6 +750,40 @@ $overdueCount = count($overdueReports);
         }
         ?>
       </select>
+    </label>
+
+    <label>Created By:
+      <select name="created_by" onchange="this.form.submit()">
+        <option value="">All Users</option>
+        <?php
+        $users = $conn->query("SELECT id, username FROM users WHERE user_type = 2 OR user_type = 1 ORDER BY username");
+        while ($row = $users->fetch_assoc()) {
+          $sel = ($selectedCreatedBy == $row['id']) ? 'selected' : '';
+          echo "<option value='{$row['id']}' $sel>" . htmlspecialchars($row['username']) . "</option>";
+        }
+        ?>
+      </select>
+    </label>
+
+    <label>Risk:
+      <select name="risk" onchange="this.form.submit()">
+        <option value="">All Risks</option>
+        <option value="عالية" <?= $selectedRisk == 'عالية' ? 'selected' : '' ?>>High</option>
+        <option value="متوسطه" <?= $selectedRisk == 'متوسطه' ? 'selected' : '' ?>>Medium</option>
+        <option value="منخفضة" <?= $selectedRisk == 'منخفضة' ? 'selected' : '' ?>>Low</option>
+      </select>
+    </label>
+
+    <label>Status:
+      <select name="status" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        <option value="0" <?= $selectedStatus === '0' ? 'selected' : '' ?>>Open</option>
+        <option value="1" <?= $selectedStatus === '1' ? 'selected' : '' ?>>Resolved</option>
+      </select>
+    </label>
+    
+    <label>
+      <a href="dailyreport_analysis.php" style="text-decoration: none; padding: 5px 10px; background: #6c757d; color: white; border-radius: 4px; font-size: 13px;">Reset</a>
     </label>
   </form>
 

@@ -4,6 +4,7 @@ import api from '../../infrastructure/api/client';
 interface LookupData {
     projects: { id: string; project_name: string }[];
     departments: { id: string; department_name: string }[];
+    users: { id: string; username: string }[];
 }
 
 export const useLookups = () => {
@@ -16,6 +17,7 @@ export const useLookups = () => {
     return {
         projects: data?.projects ?? [],
         departments: data?.departments ?? [],
+        users: data?.users ?? [],
         isLoading,
     };
 };

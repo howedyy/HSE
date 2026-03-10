@@ -6,6 +6,10 @@ $project = $_GET['project'] ?? '';
 $department = $_GET['department'] ?? '';
 $risk = $_GET['risk'] ?? '';
 $status = $_GET['status'] ?? '';
+$createdBy = $_GET['created_by'] ?? '';
+$startDate = $_GET['startDate'] ?? '';
+$endDate = $_GET['endDate'] ?? '';
+
 $page = max(1, intval($_GET['page'] ?? 1));
 $limit = intval($_GET['limit'] ?? 20);
 $offset = ($page - 1) * $limit;
@@ -18,6 +22,9 @@ if ($project !== '') { $conditions[] = "dr.project = ?"; $params[] = intval($pro
 if ($department !== '') { $conditions[] = "dr.department = ?"; $params[] = intval($department); $types .= 'i'; }
 if ($risk !== '') { $conditions[] = "dr.risk = ?"; $params[] = $risk; $types .= 's'; }
 if ($status !== '') { $conditions[] = "dr.report_status = ?"; $params[] = intval($status); $types .= 'i'; }
+if ($createdBy !== '') { $conditions[] = "dr.user_id = ?"; $params[] = intval($createdBy); $types .= 'i'; }
+if ($startDate !== '') { $conditions[] = "dr.date >= ?"; $params[] = $startDate . ' 00:00:00'; $types .= 's'; }
+if ($endDate !== '') { $conditions[] = "dr.date <= ?"; $params[] = $endDate . ' 23:59:59'; $types .= 's'; }
 
 $where = count($conditions) > 0 ? 'WHERE ' . implode(' AND ', $conditions) : '';
 

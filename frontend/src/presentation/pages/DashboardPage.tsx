@@ -1,10 +1,11 @@
 import React from 'react';
 import { useDashboard } from '../../application/hooks/useDashboard';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import {
     CheckCircle, Zap, Clock, FileText,
     Award, AlertTriangle, Building, TrendingUp,
-    ChevronRight
+    ChevronRight, RefreshCw
 } from 'lucide-react';
 
 // --- Stat Card ---
@@ -47,13 +48,13 @@ const RingChart = ({ percentage, color, label, detail }: { percentage: number; c
 };
 
 // --- Incident Row ---
-const IncidentRow = ({ description, project, date, risk, status }: {
-    description: string; project: string; date: string; risk: string; status: number;
+const IncidentRow = ({ description, project, date, risk, status, t, i18n }: {
+    description: string; project: string; date: string; risk: string; status: number; t: any; i18n: any;
 }) => {
     const isHigh = risk === 'عالية' || risk === 'High';
     const isMedium = risk === 'متوسطة' || risk === 'Medium';
     const dotColor = isHigh ? 'bg-red-500' : isMedium ? 'bg-amber-500' : 'bg-green-500';
-    const statusLabel = status === 1 ? 'Resolved' : 'Open';
+    const statusLabel = status === 1 ? t('dashboard.incidents.resolved') : t('dashboard.incidents.open');
     const statusStyle = status === 1
         ? 'bg-green-50 text-green-700 border-green-200'
         : 'bg-red-50 text-red-700 border-red-200';
@@ -62,10 +63,10 @@ const IncidentRow = ({ description, project, date, risk, status }: {
         <div className="flex items-center gap-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 rounded-lg px-2 transition-colors">
             <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${dotColor}`} />
             <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800 truncate">{description || 'No description'}</p>
+                <p className="text-sm font-medium text-gray-800 truncate">{description || t('dashboard.incidents.noDescription', 'No description')}</p>
                 <div className="flex items-center gap-3 text-xs text-gray-400 mt-0.5">
                     <span className="flex items-center gap-1"><Building size={12} /> {project}</span>
-                    <span>{new Date(date).toLocaleDateString()}</span>
+                    <span>{new Date(date).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'ar-EG')}</span>
                 </div>
             </div>
             <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${statusStyle}`}>{statusLabel}</span>
@@ -75,20 +76,20 @@ const IncidentRow = ({ description, project, date, risk, status }: {
 
 // --- Main Dashboard ---
 const DashboardPage: React.FC = () => {
+    const { t, i18n } = useTranslation();
     const { dashboard, isLoading } = useDashboard();
     const { user } = useAuth();
 
     if (isLoading || !dashboard) {
         return (
             <div className="max-w-7xl mx-auto space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    {[...Array(4)].map((_, i) => (
-                        <div key={i} className="h-32 bg-gray-100 rounded-2xl animate-pulse" />
-                    ))}
+                <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+                    <RefreshCw className="animate-spin text-blue-600" size={32} />
+                    <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">{t('common.loading')}</p>
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                    {[...Array(3)].map((_, i) => (
-                        <div key={i} className="h-64 bg-gray-100 rounded-2xl animate-pulse" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 opacity-50 pointer-events-none">
+                    {[...Array(4)].map((_, i) => (
+                        <div key={i} className="h-32 bg-gray-50 rounded-2xl animate-pulse" />
                     ))}
                 </div>
             </div>
@@ -98,21 +99,21 @@ const DashboardPage: React.FC = () => {
     const { stats, bestPractices, highRisk, taskCompletion, monthlyTrend, recentIncidents } = dashboard;
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8">
+        <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
             {/* Welcome Header */}
             <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                    Welcome back, <span className="text-blue-600">{user?.username ?? 'User'}</span>
+                    {t('dashboard.welcome', { name: user?.username ?? 'User' })}
                 </h1>
-                <p className="text-gray-500 text-sm mt-1">Here's your HSE overview for today.</p>
+                <p className="text-gray-500 text-sm mt-1">{t('dashboard.subtitle')}</p>
             </div>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <StatCard icon={<CheckCircle size={20} className="text-emerald-600" />} value={stats.completed_ptw} label="Completed Permits" color="bg-emerald-50" />
-                <StatCard icon={<Zap size={20} className="text-blue-600" />} value={stats.active_ptw} label="Active Permits" color="bg-blue-50" />
-                <StatCard icon={<Clock size={20} className="text-amber-600" />} value={stats.pending_ptw} label="Pending Approval" color="bg-amber-50" />
-                <StatCard icon={<FileText size={20} className="text-violet-600" />} value={stats.today_reports} label="Today's Reports" color="bg-violet-50" />
+                <StatCard icon={<CheckCircle size={20} className="text-emerald-600" />} value={stats.completed_ptw} label={t('dashboard.stats.completedPermits')} color="bg-emerald-50" />
+                <StatCard icon={<Zap size={20} className="text-blue-600" />} value={stats.active_ptw} label={t('dashboard.stats.activePermits')} color="bg-blue-50" />
+                <StatCard icon={<Clock size={20} className="text-amber-600" />} value={stats.pending_ptw} label={t('dashboard.stats.pendingApproval')} color="bg-amber-50" />
+                <StatCard icon={<FileText size={20} className="text-violet-600" />} value={stats.today_reports} label={t('dashboard.stats.todayReports')} color="bg-violet-50" />
             </div>
 
             {/* Compliance Ring Charts */}
@@ -120,20 +121,20 @@ const DashboardPage: React.FC = () => {
                 <RingChart
                     percentage={bestPractices.percentage}
                     color="#1c4d8d"
-                    label="Best Safety Practices"
-                    detail={`Top: ${bestPractices.projectName}`}
+                    label={t('dashboard.compliance.bestPractices')}
+                    detail={t('dashboard.compliance.top', { project: bestPractices.projectName })}
                 />
                 <RingChart
                     percentage={highRisk.complianceRate}
                     color="#f43f5e"
-                    label="High Risk Compliance"
-                    detail={`Hotspot: ${highRisk.topProject}`}
+                    label={t('dashboard.compliance.highRisk')}
+                    detail={t('dashboard.compliance.hotspot', { project: highRisk.topProject })}
                 />
                 <RingChart
                     percentage={taskCompletion}
                     color="#8b5cf6"
-                    label="Permit Completion Rate"
-                    detail={`${stats.completed_ptw} of ${stats.total_ptw} permits`}
+                    label={t('dashboard.compliance.permitRate')}
+                    detail={t('dashboard.compliance.of', { completed: stats.completed_ptw, total: stats.total_ptw })}
                 />
             </div>
 
@@ -142,7 +143,7 @@ const DashboardPage: React.FC = () => {
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-2">
                         <TrendingUp size={18} className="text-blue-600" />
-                        <h3 className="font-semibold text-gray-800">Permits Trend (6 Months)</h3>
+                        <h3 className="font-semibold text-gray-800">{t('dashboard.trend.title')}</h3>
                     </div>
                 </div>
                 <div className="flex items-end gap-3 h-40">
@@ -156,7 +157,9 @@ const DashboardPage: React.FC = () => {
                                     className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all duration-700"
                                     style={{ height: `${Math.max(heightPct, 4)}%` }}
                                 />
-                                <span className="text-xs text-gray-400">{m.month}</span>
+                                <span className="text-xs text-gray-400 uppercase tracking-tighter">
+                                    {i18n.language === 'ar' ? m.monthAr || m.month : m.month}
+                                </span>
                             </div>
                         );
                     })}
@@ -168,10 +171,10 @@ const DashboardPage: React.FC = () => {
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                         <AlertTriangle size={18} className="text-red-500" />
-                        <h3 className="font-semibold text-gray-800">Recent Observations</h3>
+                        <h3 className="font-semibold text-gray-800">{t('dashboard.incidents.title')}</h3>
                     </div>
                     <a href="/reports" className="text-xs text-blue-600 flex items-center gap-1 hover:underline">
-                        View All <ChevronRight size={14} />
+                        {t('dashboard.incidents.viewAll')} <ChevronRight size={14} className="rtl:rotate-180" />
                     </a>
                 </div>
                 {recentIncidents.length > 0 ? (
@@ -184,11 +187,13 @@ const DashboardPage: React.FC = () => {
                                 date={inc.date}
                                 risk={inc.risk}
                                 status={inc.status}
+                                t={t}
+                                i18n={i18n}
                             />
                         ))}
                     </div>
                 ) : (
-                    <p className="text-center text-gray-400 py-8">No recent observations found.</p>
+                    <p className="text-center text-gray-400 py-8 font-medium">{t('dashboard.incidents.noRecords')}</p>
                 )}
             </div>
         </div>

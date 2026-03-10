@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../infrastructure/api/client';
 import { useLookups } from '../../application/hooks/useLookups';
+import { useTranslation } from 'react-i18next';
 import {
     BarChart2, PieChart, AlertTriangle,
     Filter, RefreshCw, Clock, Building,
@@ -8,10 +9,19 @@ import {
 } from 'lucide-react';
 
 const AnalyticsPage: React.FC = () => {
-    const { projects, departments: allDepartments } = useLookups();
+    const { t, i18n } = useTranslation();
+    const { projects, departments: allDepartments, users } = useLookups();
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState({ project: '', department: '' });
+    const [filters, setFilters] = useState<Record<string, string>>({ 
+        project: '', 
+        department: '',
+        risk: '',
+        status: '',
+        created_by: '',
+        startDate: '',
+        endDate: ''
+    });
 
     const fetchAnalytics = async () => {
         setLoading(true);
@@ -40,7 +50,7 @@ const AnalyticsPage: React.FC = () => {
     if (loading && !stats) return (
         <div className="flex flex-col items-center justify-center h-screen gap-4">
             <RefreshCw className="animate-spin text-blue-600" size={48} />
-            <p className="text-gray-500 font-medium tracking-widest uppercase text-xs">Processing Safety Data Analytics...</p>
+            <p className="text-gray-500 font-medium tracking-widest uppercase text-xs">{t('common.loading')}</p>
         </div>
     );
 
@@ -50,15 +60,15 @@ const AnalyticsPage: React.FC = () => {
                 <AlertTriangle size={40} />
             </div>
             <div className="text-center space-y-2">
-                <h3 className="text-xl font-black text-gray-900">Analytics Sync Failed</h3>
-                <p className="text-gray-500 font-medium">The data engine encountered a synchronization issue with the server.</p>
+                <h3 className="text-xl font-black text-gray-900">{t('analytics.syncFailed')}</h3>
+                <p className="text-gray-500 font-medium">{t('analytics.syncError')}</p>
             </div>
             <button
                 onClick={fetchAnalytics}
                 className="px-8 py-3 bg-gray-900 text-white rounded-2xl font-bold hover:bg-gray-800 transition-all shadow-xl shadow-gray-200 flex items-center gap-2"
             >
                 <RefreshCw size={18} />
-                Retry Connection
+                {t('ptw.retry')}
             </button>
         </div>
     );
@@ -68,40 +78,112 @@ const AnalyticsPage: React.FC = () => {
             {/* Header & Advanced Filter Bar */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">Daily Report Analytics</h1>
-                    <p className="text-gray-500 mt-1 font-medium">HSE Insight Dashboard • Live Statistics</p>
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">{t('analytics.title')}</h1>
+                    <p className="text-gray-500 mt-1 font-medium">{t('analytics.subtitle')}</p>
                 </div>
 
-                <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm overflow-x-auto max-w-full">
+                <div className="flex flex-wrap items-center gap-3 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm overflow-x-auto max-w-full">
                     <div className="flex items-center gap-2 px-3 border-r border-gray-100 shrink-0">
                         <Filter size={16} className="text-blue-600" />
-                        <span className="text-xs font-bold uppercase tracking-widest text-gray-400">Filter</span>
+                        <span className="text-xs font-bold uppercase tracking-widest text-gray-400">{t('common.filter')}</span>
                     </div>
 
-                    <select
-                        value={filters.project}
-                        onChange={e => setFilters(prev => ({ ...prev, project: e.target.value }))}
-                        className="text-sm bg-gray-50 border-none rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none font-semibold min-w-[140px]"
-                    >
-                        <option value="">All Projects</option>
-                        {projects.map(p => <option key={p.id} value={p.id}>{p.project_name}</option>)}
-                    </select>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">{t('analytics.filters.dateRange')}</label>
+                        <div className="flex items-center gap-2">
+                            <input 
+                                type="date" 
+                                value={filters.startDate} 
+                                onChange={e => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                                className="text-xs bg-gray-50 border-none rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none font-semibold"
+                            />
+                            <span className="text-gray-300">-</span>
+                            <input 
+                                type="date" 
+                                value={filters.endDate} 
+                                onChange={e => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                                className="text-xs bg-gray-50 border-none rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none font-semibold"
+                            />
+                        </div>
+                    </div>
 
-                    <select
-                        value={filters.department}
-                        onChange={e => setFilters(prev => ({ ...prev, department: e.target.value }))}
-                        className="text-sm bg-gray-50 border-none rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none font-semibold min-w-[140px]"
-                    >
-                        <option value="">All Departments</option>
-                        {allDepartments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
-                    </select>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">{t('common.project')}</label>
+                        <select
+                            value={filters.project}
+                            onChange={e => setFilters(prev => ({ ...prev, project: e.target.value }))}
+                            className="text-xs bg-gray-50 border-none rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none font-semibold min-w-[120px]"
+                        >
+                            <option value="">{t('analytics.filters.allProjects')}</option>
+                            {projects.map(p => <option key={p.id} value={p.id}>{p.project_name}</option>)}
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">{t('common.department')}</label>
+                        <select
+                            value={filters.department}
+                            onChange={e => setFilters(prev => ({ ...prev, department: e.target.value }))}
+                            className="text-xs bg-gray-50 border-none rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none font-semibold min-w-[120px]"
+                        >
+                            <option value="">{t('analytics.filters.allDepartments')}</option>
+                            {allDepartments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">{t('ptw.dangerous')}</label>
+                        <select
+                            value={filters.risk}
+                            onChange={e => setFilters(prev => ({ ...prev, risk: e.target.value }))}
+                            className="text-xs bg-gray-50 border-none rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none font-semibold min-w-[100px]"
+                        >
+                            <option value="">{t('analytics.filters.allRisks')}</option>
+                            <option value="عالية">{t('analytics.filters.high')}</option>
+                            <option value="متوسطه">{t('analytics.filters.medium')}</option>
+                            <option value="منخفضة">{t('analytics.filters.low')}</option>
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">{t('common.status')}</label>
+                        <select
+                            value={filters.status}
+                            onChange={e => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                            className="text-xs bg-gray-50 border-none rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none font-semibold min-w-[100px]"
+                        >
+                            <option value="">{t('analytics.filters.allStatuses')}</option>
+                            <option value="0">{t('analytics.filters.open')}</option>
+                            <option value="1">{t('analytics.filters.resolved')}</option>
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">{t('users.systemUser')}</label>
+                        <select
+                            value={filters.created_by}
+                            onChange={e => setFilters(prev => ({ ...prev, created_by: e.target.value }))}
+                            className="text-xs bg-gray-50 border-none rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none font-semibold min-w-[120px]"
+                        >
+                            <option value="">{t('analytics.filters.allUsers')}</option>
+                            {users.map(u => <option key={u.id} value={u.id}>{u.username}</option>)}
+                        </select>
+                    </div>
 
                     <button
-                        onClick={fetchAnalytics}
-                        className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors"
-                        title="Manual Refresh"
+                        onClick={() => setFilters({ project: '', department: '', risk: '', status: '', created_by: '', startDate: '', endDate: '' })}
+                        className="p-2 bg-gray-50 text-gray-400 rounded-xl hover:bg-red-50 hover:text-red-500 transition-colors mt-auto"
+                        title={t('common.reset')}
                     >
-                        <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                        <RefreshCw size={18} />
+                    </button>
+                    
+                    <button
+                        onClick={fetchAnalytics}
+                        className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors mt-auto"
+                        title={t('ptw.retry')}
+                    >
+                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
                     </button>
                 </div>
             </div>
@@ -112,12 +194,12 @@ const AnalyticsPage: React.FC = () => {
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <AlertTriangle size={80} className="text-red-600" />
                     </div>
-                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2">Overdue Alerts</p>
+                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2">{t('analytics.metrics.overdue')}</p>
                     <div className="flex items-end gap-3">
                         <span className="text-4xl font-black text-red-600 leading-none">{stats.overdue.count}</span>
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-red-400 leading-none mb-1">UNRESOLVED</span>
-                            <span className="text-[10px] font-bold text-gray-400 leading-none">TIME EXCEEDED</span>
+                            <span className="text-[10px] font-bold text-red-400 leading-none mb-1">{t('analytics.metrics.unresolved')}</span>
+                            <span className="text-[10px] font-bold text-gray-400 leading-none">{t('analytics.metrics.timeExceeded')}</span>
                         </div>
                     </div>
                 </div>
@@ -126,14 +208,14 @@ const AnalyticsPage: React.FC = () => {
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <CheckCircle size={80} className="text-emerald-600" />
                     </div>
-                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2">Total Reports</p>
+                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2">{t('analytics.metrics.total')}</p>
                     <div className="flex items-end gap-3">
                         <span className="text-4xl font-black text-gray-900 leading-none">
                             {stats.byRisk.reduce((acc: number, r: any) => acc + r.count, 0)}
                         </span>
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-emerald-500 leading-none mb-1">CUMULATIVE</span>
-                            <span className="text-[10px] font-bold text-gray-400 leading-none">OBSERVATIONS</span>
+                            <span className="text-[10px] font-bold text-emerald-500 leading-none mb-1">{t('analytics.metrics.cumulative')}</span>
+                            <span className="text-[10px] font-bold text-gray-400 leading-none">{t('analytics.metrics.observations')}</span>
                         </div>
                     </div>
                 </div>
@@ -142,12 +224,12 @@ const AnalyticsPage: React.FC = () => {
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <BarChart2 size={80} className="text-violet-600" />
                     </div>
-                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2">Departments In-Focus</p>
+                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2">{t('analytics.metrics.focus')}</p>
                     <div className="flex items-end gap-3">
                         <span className="text-4xl font-black text-violet-600 leading-none">{stats.byDepartment.length}</span>
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-violet-400 leading-none mb-1">ACTIVE</span>
-                            <span className="text-[10px] font-bold text-gray-400 leading-none">SAFETY UNITS</span>
+                            <span className="text-[10px] font-bold text-violet-400 leading-none mb-1">{t('analytics.metrics.active')}</span>
+                            <span className="text-[10px] font-bold text-gray-400 leading-none">{t('analytics.metrics.safetyUnits')}</span>
                         </div>
                     </div>
                 </div>
@@ -156,12 +238,12 @@ const AnalyticsPage: React.FC = () => {
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <Calendar size={80} className="text-blue-600" />
                     </div>
-                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2">Monthly Coverage</p>
+                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2">{t('analytics.metrics.coverage')}</p>
                     <div className="flex items-end gap-3">
                         <span className="text-4xl font-black text-blue-600 leading-none">30+</span>
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-blue-400 leading-none mb-1">HISTORICAL</span>
-                            <span className="text-[10px] font-bold text-gray-400 leading-none">DAY ANALYSIS</span>
+                            <span className="text-[10px] font-bold text-blue-400 leading-none mb-1">{t('analytics.metrics.historical')}</span>
+                            <span className="text-[10px] font-bold text-gray-400 leading-none">{t('analytics.metrics.dayAnalysis')}</span>
                         </div>
                     </div>
                 </div>
@@ -177,8 +259,8 @@ const AnalyticsPage: React.FC = () => {
                                 <Building size={24} />
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold text-gray-900">Department Safety Distribution</h3>
-                                <p className="text-xs text-gray-400 font-medium">Reports logged per operational unit</p>
+                                <h3 className="text-xl font-bold text-gray-900">{t('analytics.charts.distribution')}</h3>
+                                <p className="text-xs text-gray-400 font-medium">{t('analytics.charts.distributionSub')}</p>
                             </div>
                         </div>
                     </div>
@@ -212,8 +294,8 @@ const AnalyticsPage: React.FC = () => {
                             <PieChart size={24} />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-gray-900">Observation Risk Matrix</h3>
-                            <p className="text-xs text-gray-400 font-medium">Criticality breakdown of reported hazards</p>
+                            <h3 className="text-xl font-bold text-gray-900">{t('analytics.charts.riskMatrix')}</h3>
+                            <p className="text-xs text-gray-400 font-medium">{t('analytics.charts.riskMatrixSub')}</p>
                         </div>
                     </div>
 
@@ -248,7 +330,7 @@ const AnalyticsPage: React.FC = () => {
                                 <span className="text-2xl font-black text-gray-900 leading-none">
                                     {stats.byRisk.length}
                                 </span>
-                                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mt-1">Levels</span>
+                                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mt-1">{t('analytics.charts.riskLevels')}</span>
                             </div>
                         </div>
 
@@ -258,7 +340,11 @@ const AnalyticsPage: React.FC = () => {
                                 <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50/50 border border-gray-100 group hover:border-blue-200 transition-all">
                                     <div className="flex items-center gap-3">
                                         <div className="w-4 h-4 rounded-md" style={{ backgroundColor: riskColors[r.risk] }} />
-                                        <span className="text-sm font-bold text-gray-700 uppercase tracking-tight">{r.risk} Risk</span>
+                                        <span className="text-sm font-bold text-gray-700 uppercase tracking-tight">
+                                            {r.risk === 'عالية' || r.risk === 'High' ? t('analytics.filters.high') :
+                                             r.risk === 'متوسطه' || r.risk === 'Medium' ? t('analytics.filters.medium') :
+                                             t('analytics.filters.low')}
+                                        </span>
                                     </div>
                                     <span className="text-sm font-black text-gray-900">{r.count}</span>
                                 </div>
@@ -276,8 +362,10 @@ const AnalyticsPage: React.FC = () => {
                             <Clock size={24} />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-gray-900">Critical Overdue Observations</h3>
-                            <p className="text-xs text-red-500 font-bold uppercase tracking-widest mt-0.5 animate-pulse">Action Required • {stats.overdue.count} Items</p>
+                            <h3 className="text-xl font-bold text-gray-900">{t('analytics.overdue.title')}</h3>
+                            <p className="text-xs text-red-500 font-bold uppercase tracking-widest mt-0.5 animate-pulse">
+                                {t('analytics.overdue.subtitle', { count: stats.overdue.count })}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -286,11 +374,11 @@ const AnalyticsPage: React.FC = () => {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50/50 border-b border-gray-100">
-                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">ID / Date</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Ownership</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Risk Level</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Delay Hours</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Violation Tag</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('ptw.table.idDate')}</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('ptw.table.projectDept')}</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">{t('ptw.dangerous')}</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">{t('analytics.overdue.delayHours')}</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">{t('common.status')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -299,7 +387,9 @@ const AnalyticsPage: React.FC = () => {
                                     <tr key={i} className="hover:bg-gray-50/30 transition-colors group">
                                         <td className="px-8 py-6">
                                             <div className="font-black text-gray-900 group-hover:text-blue-600 transition-colors">#{r.id}</div>
-                                            <div className="text-xs text-gray-400 font-medium mt-1">{new Date(r.date).toLocaleDateString()}</div>
+                                            <div className="text-xs text-gray-400 font-medium mt-1">
+                                                {new Date(r.date).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'ar-EG')}
+                                            </div>
                                         </td>
                                         <td className="px-8 py-6">
                                             <div className="font-bold text-gray-800 text-sm uppercase tracking-tight">{r.project_name}</div>
@@ -313,17 +403,19 @@ const AnalyticsPage: React.FC = () => {
                                                 className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-gray-100"
                                                 style={{ color: riskColors[r.risk], backgroundColor: `${riskColors[r.risk]}10` }}
                                             >
-                                                {r.risk}
+                                                {r.risk === 'عالية' || r.risk === 'High' ? t('analytics.filters.high') :
+                                                 r.risk === 'متوسطه' || r.risk === 'Medium' ? t('analytics.filters.medium') :
+                                                 t('analytics.filters.low')}
                                             </span>
                                         </td>
                                         <td className="px-8 py-6 text-center">
                                             <div className="font-black text-gray-900 group-hover:scale-110 transition-transform origin-center">{r.delay_hours}h</div>
-                                            <div className="text-[9px] font-bold text-red-500 uppercase mt-0.5">+{r.exceeded_by}h Late</div>
+                                            <div className="text-[9px] font-bold text-red-500 uppercase mt-0.5">{t('analytics.overdue.late', { hours: r.exceeded_by })}</div>
                                         </td>
                                         <td className="px-8 py-6 text-right">
                                             <div className="flex items-center justify-end gap-2 text-xs font-black text-red-600 bg-red-50/50 px-3 py-2 rounded-xl border border-red-100 ml-auto w-fit">
                                                 <AlertTriangle size={14} />
-                                                NON-COMPLIANCE
+                                                {t('analytics.overdue.nonCompliance')}
                                             </div>
                                         </td>
                                     </tr>
@@ -335,7 +427,7 @@ const AnalyticsPage: React.FC = () => {
                                             <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center">
                                                 <CheckCircle size={32} />
                                             </div>
-                                            <p className="text-gray-500 font-bold uppercase tracking-widest text-sm">All Clear! No Overdue Reports</p>
+                                            <p className="text-gray-500 font-bold uppercase tracking-widest text-sm">{t('analytics.overdue.allClear')}</p>
                                         </div>
                                     </td>
                                 </tr>
