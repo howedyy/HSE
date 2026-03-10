@@ -1,17 +1,35 @@
 <?php
 require_once __DIR__ . '/../header.php';
 
-$project = $_GET['project'] ?? '';
-$department = $_GET['department'] ?? '';
-$status = $_GET['status'] ?? '';
-$page = max(1, intval($_GET['page'] ?? 1));
-$limit = intval($_GET['limit'] ?? 20);
-$offset = ($page - 1) * $limit;
+$project       = $_GET['project']       ?? '';
+$department    = $_GET['department']    ?? '';
+$status        = $_GET['status']        ?? '';
+$permitNumber  = $_GET['permitNumber']  ?? '';
+$operation     = $_GET['operation']     ?? '';
+$startDate     = $_GET['startDate']     ?? '';
+$endDate       = $_GET['endDate']       ?? '';
+$page          = max(1, intval($_GET['page']  ?? 1));
+$limit         = intval($_GET['limit']        ?? 20);
+$offset        = ($page - 1) * $limit;
 
 $conditions = [];
-if ($project !== '') $conditions[] = "p.project_name = '" . $conn->real_escape_string($project) . "'";
-if ($department !== '') $conditions[] = "p.department = " . intval($department);
-if ($status !== '') $conditions[] = "p.ptw_status = " . intval($status);
+if ($project !== '')      $conditions[] = "p.project_name = '"  . $conn->real_escape_string($project)    . "'";
+if ($department !== '')   $conditions[] = "p.department = "     . intval($department);
+if ($status !== '')       $conditions[] = "p.ptw_status = "     . intval($status);
+if ($operation !== '')    $conditions[] = "p.operation_type = '" . $conn->real_escape_string($operation) . "'";
+if ($startDate !== '')    $conditions[] = "p.permit_date >= '"  . $conn->real_escape_string($startDate)  . "'";
+if ($endDate !== '')      $conditions[] = "p.permit_date <= '"  . $conn->real_escape_string($endDate)    . "'";
+
+if ($permitNumber !== '') {
+    $pn = $conn->real_escape_string(str_replace(' ', '', $permitNumber));
+    if (preg_match('/^PTW_?(\d+)$/i', $pn, $m)) {
+        $num  = intval($m[1]);
+        $pad  = sprintf('%03d', $num);
+        $conditions[] = "(p.permit_number = 'PTW_$pn' OR p.permit_number = 'PTW$pn' OR p.permit_number = 'PTW_$pad' OR p.permit_number = 'PTW$pad' OR p.permit_number LIKE '%$pn%')";
+    } else {
+        $conditions[] = "p.permit_number LIKE '%$pn%'";
+    }
+}
 
 $where = count($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
 
@@ -19,10 +37,13 @@ $where = count($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
 $countRes = $conn->query("SELECT COUNT(*) as total FROM PTW p LEFT JOIN department d ON p.department = d.id $where");
 $total = $countRes ? (int)$countRes->fetch_assoc()['total'] : 0;
 
-// Fetch
+// Fetch — include all columns needed by the overview page
 $sql = "SELECT p.id, p.permit_number, p.permit_date, p.editor_name, p.job_title,
-        p.project_name, d.department_name, p.operation_type, p.ptw_status,
-        p.work_location, p.work_description
+        p.project_name, d.department_name, p.department,
+        p.operation_type, p.ptw_status, p.work_location, p.work_description,
+        p.tools_equipment, p.safety_measures, p.risk_assessment,
+        p.company_name, p.execution_manager_signature, p.admin_signature,
+        p.safety_manager, p.safety_signature, p.start_time, p.end_time
         FROM PTW p LEFT JOIN department d ON p.department = d.id
         $where ORDER BY p.id DESC LIMIT $limit OFFSET $offset";
 
@@ -30,16 +51,16 @@ $result = $conn->query($sql);
 $permits = [];
 if ($result) {
     while ($row = $result->fetch_assoc()) {
-        $row['id'] = (int)$row['id'];
+        $row['id']         = (int)$row['id'];
         $row['ptw_status'] = (int)$row['ptw_status'];
         $permits[] = $row;
     }
 }
 
 echo json_encode([
-    'data' => $permits,
-    'total' => $total,
-    'page' => $page,
+    'data'       => $permits,
+    'total'      => $total,
+    'page'       => $page,
     'totalPages' => ceil($total / max($limit, 1)),
 ], JSON_UNESCAPED_UNICODE);
 
