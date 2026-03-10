@@ -11,6 +11,11 @@ if (!isset($_SESSION['user_id'])) {
 // Filters from request
 $selectedProject = $_GET['project'] ?? '';
 $selectedDepartment = $_GET['department'] ?? '';
+$selectedRisk = $_GET['risk'] ?? '';
+$selectedStatus = $_GET['status'] ?? '';
+$selectedCreatedBy = $_GET['created_by'] ?? '';
+$startDate = $_GET['startDate'] ?? '';
+$endDate = $_GET['endDate'] ?? '';
 
 $whereConditions = [];
 $params = [];
@@ -25,6 +30,31 @@ if ($selectedDepartment !== '') {
     $whereConditions[] = "dr.department = ?";
     $params[] = (int)$selectedDepartment;
     $types .= "i";
+}
+if ($selectedRisk !== '') {
+    $whereConditions[] = "dr.risk = ?";
+    $params[] = $selectedRisk;
+    $types .= "s";
+}
+if ($selectedStatus !== '') {
+    $whereConditions[] = "dr.report_status = ?";
+    $params[] = (int)$selectedStatus;
+    $types .= "i";
+}
+if ($selectedCreatedBy !== '') {
+    $whereConditions[] = "dr.user_id = ?";
+    $params[] = (int)$selectedCreatedBy;
+    $types .= "i";
+}
+if ($startDate !== '') {
+    $whereConditions[] = "dr.date >= ?";
+    $params[] = $startDate . ' 00:00:00';
+    $types .= "s";
+}
+if ($endDate !== '') {
+    $whereConditions[] = "dr.date <= ?";
+    $params[] = $endDate . ' 23:59:59';
+    $types .= "s";
 }
 
 $whereClause = count($whereConditions) > 0 ? "WHERE " . implode(" AND ", $whereConditions) : "";

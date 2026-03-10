@@ -3,6 +3,20 @@ require_once 'include/header.php';
 require_once 'constants/dbconnect.php';
 
 $edit_id = isset($_GET['edit_id']) ? intval($_GET['edit_id']) : 0;
+
+// Capture filters to pass back to overview
+$filters = [
+    'project' => $_GET['project'] ?? '',
+    'department' => $_GET['department'] ?? '',
+    'created_by' => $_GET['created_by'] ?? '',
+    'risk' => $_GET['risk'] ?? '',
+    'status' => $_GET['status'] ?? '',
+    'startDate' => $_GET['startDate'] ?? '',
+    'endDate' => $_GET['endDate'] ?? '',
+    'entries' => $_GET['entries'] ?? ''
+];
+$filterQuery = http_build_query(array_filter($filters));
+$backUrl = 'dailyreport_overview.php' . ($filterQuery ? '?' . $filterQuery : '');
 $edit_data = null;
 
 if ($edit_id > 0) {
@@ -189,7 +203,7 @@ if ($edit_id > 0) {
                 <button type="submit"><?= $edit_id ? 'Update Report' : 'Submit Report' ?></button>
             </div>
             <div class="form-group">
-                <a href="dailyreport_overview.php" class="btn">Back to Overview</a>
+                <a href="<?= $backUrl ?>" class="btn">Back to Overview</a>
             </div>
         </form>
         <div id="responseMessage"></div>

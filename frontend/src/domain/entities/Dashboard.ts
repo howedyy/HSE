@@ -23,6 +23,7 @@ export interface HighRisk {
 
 export interface MonthlyTrend {
     month: string;
+    monthAr?: string;
     count: number;
 }
 

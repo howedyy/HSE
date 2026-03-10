@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLookups } from '../../application/hooks/useLookups';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import api from '../../infrastructure/api/client';
 import { phpUrl } from '../../shared/utils/phpUrl';
 import {
@@ -25,25 +26,19 @@ interface PTWPermit {
 interface HistoryEntry { action: string; action_by: string; action_date: string; notes: string; }
 interface ImageEntry { image_path: string; image_type: string; }
 
-// ─── Status Config ───────────────────────────────────────────────────────────
-const STATUS: Record<number, { label: string; style: string; icon: string }> = {
-    0: { label: 'Not Approved', style: 'bg-amber-50 text-amber-700 border-amber-200', icon: '⏳' },
-    1: { label: 'Approved', style: 'bg-blue-50 text-blue-700 border-blue-200', icon: '✅' },
-    2: { label: 'Finished', style: 'bg-green-50 text-green-700 border-green-200', icon: '✔' },
-    3: { label: 'Not Completed', style: 'bg-orange-50 text-orange-700 border-orange-200', icon: '❌' },
-    4: { label: 'Non-Compliance', style: 'bg-red-50 text-red-700 border-red-200', icon: '⚠️' },
-};
-
-const OPERATIONS = [
-    'تقليم الجذور', 'السباكة', 'أعمال حفر', 'أعمال لحام كهربي',
-    'العمل على ارتفاع سبايدر', 'أعمال رفع أحمال بمعدات ثقيلة',
-    'العمل علي سقالة', 'العمل على السلم المفصلى', 'أعمال نقل بمعدات ثقيلة',
-    'العمل بداخل الغرف المغلقة', 'العمل على السلم الهيدروليكي',
-    'إعمال كهرباء الجهد المتوسط', 'العمل بالمواد الخطرة',
-];
-
 const ic = "w-full px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all";
 const btn = (color: string) => `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all hover:-translate-y-0.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0 ${color}`;
+
+const getStatusInfo = (status: number, t: any) => {
+    switch (status) {
+        case 0: return { label: t('ptw.status.pending'), style: 'bg-amber-50 text-amber-700 border-amber-200', icon: '⏳' };
+        case 1: return { label: t('ptw.status.approved'), style: 'bg-blue-50 text-blue-700 border-blue-200', icon: '✅' };
+        case 2: return { label: t('ptw.status.finished'), style: 'bg-green-50 text-green-700 border-green-200', icon: '✔' };
+        case 3: return { label: t('ptw.status.notCompleted'), style: 'bg-orange-50 text-orange-700 border-orange-200', icon: '❌' };
+        case 4: return { label: t('ptw.status.nonCompliance'), style: 'bg-red-50 text-red-700 border-red-200', icon: '⚠️' };
+        default: return { label: t('common.unassigned'), style: 'bg-gray-50 text-gray-700 border-gray-200', icon: '❓' };
+    }
+};
 
 // ─── Sub-component: Expandable Detail Row ─────────────────────────────────────
 const ExpandedDetails: React.FC<{ permit: PTWPermit }> = ({ permit }) => {
@@ -241,9 +236,10 @@ const Modal: React.FC<{ title: string; onClose: () => void; children: React.Reac
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const PTWPage: React.FC = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
-    const qc = useQueryClient();
     const { hasPermission } = useAuth();
+    const qc = useQueryClient();
     const { projects, departments } = useLookups();
 
     const [page, setPage] = useState(1);
@@ -305,6 +301,11 @@ const PTWPage: React.FC = () => {
         }
     };
 
+    const handleExportExcel = () => {
+        const queryParams = new URLSearchParams(filters).toString();
+        window.open(phpUrl('export_ptw_overview_excel.php', queryParams ? { filters: queryParams } : {}), '_blank');
+    };
+
     return (
         <div className="max-w-full mx-auto space-y-5">
             {/* Action error banner */}
@@ -322,24 +323,27 @@ const PTWPage: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <ClipboardCheck size={24} className="text-indigo-600" /> Permit to Work Overview
+                    <h1 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+                        <div className="p-2 bg-indigo-600 text-white rounded-2xl shadow-lg shadow-indigo-100">
+                            <ClipboardCheck size={28} />
+                        </div>
+                        {t('ptw.title')}
                     </h1>
-                    <p className="text-sm text-gray-500 mt-1">{total} permits in system</p>
+                    <p className="text-sm font-medium text-gray-500 mt-2 ml-14">{t('ptw.subtitle', { count: total })}</p>
                 </div>
-                <div className="flex items-center gap-3 flex-wrap">
-                    {canExport && (
-                        <a href={phpUrl('export_ptw_overview_excel.php')} target="_blank" rel="noreferrer"
-                            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm">
-                            <Download size={15} /> Export Excel
-                        </a>
-                    )}
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={handleExportExcel}
+                        className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl text-sm font-bold hover:bg-emerald-100 transition-colors"
+                    >
+                        <Download size={16} /> {t('ptw.exportExcel')}
+                    </button>
                     <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-all ${showFilters ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-all ${showFilters ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
                     >
                         {showFilters ? <X size={16} /> : <Filter size={16} />}
-                        {showFilters ? 'Hide Filters' : 'Filter'}
+                        {t('common.filter')}
                         {Object.keys(filters).length > 0 && !showFilters && (
                             <span className="ml-1 bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                                 {Object.keys(filters).length}
@@ -347,9 +351,8 @@ const PTWPage: React.FC = () => {
                         )}
                     </button>
                     {canSubmit && (
-                        <button onClick={() => navigate('/permits/new')}
-                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm">
-                            <Plus size={16} /> New Permit
+                        <button onClick={() => navigate('/permits/new')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 hover:-translate-y-0.5 active:translate-y-0">
+                            <Plus size={16} strokeWidth={3} /> {t('ptw.newPermit')}
                         </button>
                     )}
                 </div>
@@ -357,59 +360,72 @@ const PTWPage: React.FC = () => {
 
             {/* Filter Panel */}
             {showFilters && (
-                <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-600 mb-1">Permit Number</label>
-                            <input placeholder="Search PTW..." className={ic} value={filters.permitNumber ?? ''}
-                                onChange={e => updateFilter('permitNumber', e.target.value)} />
+                <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-6 animate-in slide-in-from-top-4 duration-500 overflow-hidden shadow-sm">
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('ptw.filters.permitNumber')}</label>
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                            <input
+                                type="text"
+                                placeholder={t('ptw.filters.searchPlaceholder')}
+                                onChange={(e) => updateFilter('search', e.target.value)}
+                                value={filters.search ?? ''}
+                                className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-2xl text-[11px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                            />
                         </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-600 mb-1">Project</label>
-                            <select className={ic} value={filters.project ?? ''} onChange={e => updateFilter('project', e.target.value)}>
-                                <option value="">All Projects</option>
-                                {projects.map(p => <option key={p.id} value={p.project_name}>{p.project_name}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-600 mb-1">Department</label>
-                            <select className={ic} value={filters.department ?? ''} onChange={e => updateFilter('department', e.target.value)}>
-                                <option value="">All Departments</option>
-                                {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-600 mb-1">Operation Type</label>
-                            <select className={ic} value={filters.operation ?? ''} onChange={e => updateFilter('operation', e.target.value)}>
-                                <option value="">All Operations</option>
-                                {OPERATIONS.map(op => <option key={op} value={op}>{op}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-600 mb-1">Status</label>
-                            <select className={ic} value={filters.status ?? ''} onChange={e => updateFilter('status', e.target.value)}>
-                                <option value="">All Statuses</option>
-                                <option value="0">⏳ Not Approved</option>
-                                <option value="1">✅ Approved</option>
-                                <option value="2">✔ Finished</option>
-                                <option value="3">❌ Not Completed</option>
-                                <option value="4">⚠️ Non-Compliance</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-600 mb-1">Start Date</label>
-                            <input type="date" className={ic} value={filters.startDate ?? ''} onChange={e => updateFilter('startDate', e.target.value)} />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-600 mb-1">End Date</label>
-                            <input type="date" className={ic} value={filters.endDate ?? ''} onChange={e => updateFilter('endDate', e.target.value)} />
-                        </div>
-                        <div className="flex items-end">
-                            <button onClick={() => { setFilters({}); setPage(1); }}
-                                className="w-full py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
-                                Reset Filters
-                            </button>
-                        </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('common.project')}</label>
+                        <select onChange={(e) => updateFilter('project', e.target.value)} value={filters.project ?? ''} className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl text-[11px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer appearance-none">
+                            <option value="">{t('ptw.filters.allProjects', 'All Projects')}</option>
+                            {projects.map(p => <option key={p.id} value={p.id}>{p.project_name}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('common.department')}</label>
+                        <select onChange={(e) => updateFilter('department', e.target.value)} value={filters.department ?? ''} className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl text-[11px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer appearance-none">
+                            <option value="">{t('ptw.filters.allDepartments', 'All Departments')}</option>
+                            {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('ptw.operationType')}</label>
+                        <select onChange={(e) => updateFilter('type', e.target.value)} value={filters.type ?? ''} className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl text-[11px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer appearance-none">
+                            <option value="">{t('ptw.filters.allOperations')}</option>
+                            <option value="Cold Work">{t('ptw.operations.cold')}</option>
+                            <option value="Hot Work">{t('ptw.operations.hot')}</option>
+                            <option value="Radiography Work">{t('ptw.operations.radiography')}</option>
+                            <option value="Confined Space">{t('ptw.operations.confined')}</option>
+                            <option value="Excavation">{t('ptw.operations.excavation')}</option>
+                            <option value="Work at Height">{t('ptw.operations.height')}</option>
+                        </select>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('common.status')}</label>
+                        <select onChange={(e) => updateFilter('status', e.target.value)} value={filters.status ?? ''} className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl text-[11px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer appearance-none">
+                            <option value="">{t('ptw.filters.allStatuses', 'All Statuses')}</option>
+                            <option value="0">{t('ptw.status.pending')}</option>
+                            <option value="1">{t('ptw.status.approved')}</option>
+                            <option value="2">{t('ptw.status.finished')}</option>
+                            <option value="3">{t('ptw.status.notCompleted')}</option>
+                            <option value="4">{t('ptw.status.nonCompliance')}</option>
+                        </select>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('common.startDate')}</label>
+                        <input type="date" onChange={(e) => updateFilter('startDate', e.target.value)} value={filters.startDate ?? ''} className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl text-[11px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('common.endDate')}</label>
+                        <input type="date" onChange={(e) => updateFilter('endDate', e.target.value)} value={filters.endDate ?? ''} className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl text-[11px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-sans" />
+                    </div>
+                    <div className="flex flex-col gap-2 xl:col-span-1 xl:justify-end">
+                        <button
+                            onClick={() => { setFilters({}); setPage(1); }}
+                            className="w-full py-3.5 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg shadow-gray-200 hover:-translate-y-0.5 active:translate-y-0"
+                        >
+                            {t('ptw.filters.reset')}
+                        </button>
                     </div>
                 </div>
             )}
@@ -438,7 +454,7 @@ const PTWPage: React.FC = () => {
                             </thead>
                             <tbody>
                                 {permits.map(p => {
-                                    const s = STATUS[p.ptw_status] ?? STATUS[0];
+                                    const status = getStatusInfo(p.ptw_status, t);
                                     const isOpen = expanded === p.permit_number;
                                     return (
                                         <React.Fragment key={p.id}>
@@ -459,8 +475,8 @@ const PTWPage: React.FC = () => {
                                                 <td className="px-4 py-3 text-gray-600 text-xs">{p.permit_date ? new Date(p.permit_date).toLocaleDateString('en-GB') : '—'}</td>
                                                 <td className="px-4 py-3 text-gray-600 text-xs max-w-[140px] truncate" dir="rtl">{p.operation_type}</td>
                                                 <td className="px-4 py-3">
-                                                    <span className={`text-[10px] px-2 py-1 rounded-full border font-semibold whitespace-nowrap ${s.style}`}>
-                                                        {s.icon} {s.label}
+                                                    <span className={`text-[10px] px-2 py-1 rounded-full border font-semibold whitespace-nowrap ${status.style}`}>
+                                                        {status.icon} {status.label}
                                                     </span>
                                                 </td>
                                                 {/* Actions */}
