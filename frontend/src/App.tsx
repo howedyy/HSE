@@ -9,6 +9,7 @@ import PTWPage from './presentation/pages/PTWPage';
 import CreatePTWPage from './presentation/pages/CreatePTWPage';
 import PtwAnalyticsPage from './presentation/pages/PtwAnalyticsPage';
 import UserManagementPage from './presentation/pages/UserManagementPage';
+import SettingsPage from './presentation/pages/SettingsPage';
 import LoginPage from './presentation/pages/LoginPage';
 import { ProtectedRoute } from './presentation/components/SecurityGuards';
 
@@ -35,9 +36,7 @@ function App() {
             <Route path="/permits/analytics" element={<PtwAnalyticsPage />} />
             <Route path="/permits/new" element={<CreatePTWPage />} />
             <Route path="/users" element={<UserManagementPage />} />
-            <Route path="/settings" element={
-              <div className="text-center py-20 text-gray-400">Settings — Coming Soon</div>
-            } />
+            <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Route>
       </Routes>

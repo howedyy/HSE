@@ -332,6 +332,35 @@ const resources = {
         "ptw": "Permits",
         "analytics": "Analytics",
         "users": "Security"
+      },
+      "settings": {
+        "title": "Security & System Settings",
+        "subtitle": "Administrative Oversight",
+        "tabs": {
+          "users": "Add New User",
+          "projects": "Project Management"
+        },
+        "addUserTitle": "New User Profile",
+        "addUserSubtitle": "Create a system-level account with specific permissions.",
+        "projectManagementTitle": "Project Portfolio",
+        "projectManagementSubtitle": "Manage active projects, regions, and communication emails.",
+        "createUser": "Create User",
+        "fetchProjectsFailed": "Failed to load projects",
+        "projectCreated": "Project created!",
+        "projectCreateFailed": "Failed to create project",
+        "projectNamePlaceholder": "Enter project name...",
+        "projectEmailPlaceholder": "Project email (optional)...",
+        "regionWest": "West Region",
+        "regionWestShort": "West",
+        "regionEast": "East Region",
+        "regionEastShort": "East",
+        "addProject": "Add New Project",
+        "toggleProjectFailed": "Failed to update project status",
+        "projectsTitle": "All Projects",
+        "total": "Total",
+        "noProjects": "No projects found",
+        "deactivate": "Deactivate",
+        "activate": "Activate"
       }
     }
   },
@@ -667,6 +696,35 @@ const resources = {
         "ptw": "التصاريح",
         "analytics": "التحليلات",
         "users": "الأمن"
+      },
+      "settings": {
+        "title": "إعدادات الأمان والنظام",
+        "subtitle": "الرقابة الإدارية",
+        "tabs": {
+          "users": "إضافة مستخدم جديد",
+          "projects": "إدارة المشاريع"
+        },
+        "addUserTitle": "ملف تعريف مستخدم جديد",
+        "addUserSubtitle": "إنشاء حساب على مستوى النظام مع أذونات محددة.",
+        "projectManagementTitle": "محفظة المشاريع",
+        "projectManagementSubtitle": "إدارة المشاريع النشطة والمناطق ورسائل البريد الإلكتروني للتواصل.",
+        "createUser": "إنشاء مستخدم",
+        "fetchProjectsFailed": "فشل تحميل المشاريع",
+        "projectCreated": "تم إنشاء المشروع!",
+        "projectCreateFailed": "فشل إنشاء المشروع",
+        "projectNamePlaceholder": "أدخل اسم المشروع...",
+        "projectEmailPlaceholder": "بريد المشروع (اختياري)...",
+        "regionWest": "منطقة الغرب",
+        "regionWestShort": "الغرب",
+        "regionEast": "منطقة الشرق",
+        "regionEastShort": "الشرق",
+        "addProject": "إضافة مشروع جديد",
+        "toggleProjectFailed": "فشل تحديث حالة المشروع",
+        "projectsTitle": "جميع المشاريع",
+        "total": "الإجمالي",
+        "noProjects": "لم يتم العثور على مشاريع",
+        "deactivate": "تعطيل",
+        "activate": "تفعيل"
       }
     }
   }

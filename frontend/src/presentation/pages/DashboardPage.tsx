@@ -3,8 +3,8 @@ import { useDashboard } from '../../application/hooks/useDashboard';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import {
-    CheckCircle, Zap, Clock, FileText,
-    Award, AlertTriangle, Building, TrendingUp,
+    CircleCheck, Zap, Clock, FileText,
+    TriangleAlert, Building, TrendingUp,
     ChevronRight, RefreshCw
 } from 'lucide-react';
 
@@ -110,7 +110,7 @@ const DashboardPage: React.FC = () => {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <StatCard icon={<CheckCircle size={20} className="text-emerald-600" />} value={stats.completed_ptw} label={t('dashboard.stats.completedPermits')} color="bg-emerald-50" />
+                <StatCard icon={<CircleCheck size={20} className="text-emerald-600" />} value={stats.completed_ptw} label={t('dashboard.stats.completedPermits')} color="bg-emerald-50" />
                 <StatCard icon={<Zap size={20} className="text-blue-600" />} value={stats.active_ptw} label={t('dashboard.stats.activePermits')} color="bg-blue-50" />
                 <StatCard icon={<Clock size={20} className="text-amber-600" />} value={stats.pending_ptw} label={t('dashboard.stats.pendingApproval')} color="bg-amber-50" />
                 <StatCard icon={<FileText size={20} className="text-violet-600" />} value={stats.today_reports} label={t('dashboard.stats.todayReports')} color="bg-violet-50" />
@@ -170,7 +170,7 @@ const DashboardPage: React.FC = () => {
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                        <AlertTriangle size={18} className="text-red-500" />
+                        <TriangleAlert size={18} className="text-red-500" />
                         <h3 className="font-semibold text-gray-800">{t('dashboard.incidents.title')}</h3>
                     </div>
                     <a href="/reports" className="text-xs text-blue-600 flex items-center gap-1 hover:underline">
