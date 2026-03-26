@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edara HSE - React Hooks Explainer</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;800&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --panel-bg: #161b22;
+            --text-main: #e6edf3;
+            --accent-purple: #bc8fef; /* keywords */
+            --accent-teal: #79c0ff;   /* strings */
+            --accent-blue: #a5d6ff;   /* types */
+            --accent-amber: #ffa657;  /* functions */
+            --amber-highlight: #ffca28; /* [ coming next ] */
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Video Container 16:9 */
+        #video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 1920px;
+            max-height: 1080px;
+            aspect-ratio: 16/9;
+            margin: 0 auto;
+            overflow: hidden;
+            box-shadow: 0 0 100px rgba(0,0,0,0.5);
+        }
+
+        /* Scenes Utility */
+        .scene {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: transform var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1), opacity var(--transition-speed);
+        }
+
+        .scene.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .scene.past {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+
+        /* Split Screen Layout */
+        .split-screen {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            height: calc(100% - 80px); /* Leave room for bottom bar */
+        }
+
+        .panel-left {
+            background: var(--panel-bg);
+            border-right: 1px solid #30363d;
+            padding: 40px;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .panel-right {
+            background: #010409;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .file-label {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            color: #8b949e;
+            background: rgba(0,0,0,0.3);
+            padding: 4px 10px;
+            border-radius: 4px;
+            z-index: 10;
+        }
+
+        /* VS Code Style */
+        pre[class*="language-"] {
+            background: transparent !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-family: 'Fira Code', monospace !important;
+            font-size: 18px !important;
+            line-height: 1.6 !important;
+        }
+
+        .token.keyword { color: var(--accent-purple) !important; font-weight: 600; }
+        .token.string { color: var(--accent-teal) !important; }
+        .token.function { color: var(--accent-amber) !important; }
+        .token.class-name, .token.type { color: var(--accent-blue) !important; }
+        .token.comment { color: #8b949e !important; }
+
+        /* Highlight Animation */
+        .highlight-line {
+            background: rgba(255, 166, 87, 0.1);
+            border-left: 3px solid var(--accent-amber);
+            margin-left: -40px;
+            padding-left: 37px;
+            transition: all 0.5s ease;
+            opacity: 0.3;
+        }
+
+        .highlight-line.active {
+            opacity: 1;
+            background: rgba(255, 166, 87, 0.2);
+            box-shadow: inset 0 0 10px rgba(255, 166, 87, 0.1);
+        }
+
+        /* App Preview Area */
+        .app-preview {
+            width: 90%;
+            height: 80%;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .app-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .app-preview .overlay-label {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* Narrative Overlay */
+        .text-overlay {
+            position: absolute;
+            top: 15%;
+            left: 5%;
+            width: 40%;
+            font-family: 'Outfit', sans-serif;
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1.2;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        /* Best Practice Callout */
+        #bottom-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: rgba(0,0,0,0.9);
+            border-top: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            padding: 0 40px;
+            justify-content: center;
+        }
+
+        .best-practice {
+            background: linear-gradient(90deg, #1f2937, #111827);
+            border: 1px solid #374151;
+            padding: 15px 30px;
+            border-radius: 12px;
+            color: #d1d5db;
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .best-practice.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .best-practice::before {
+            content: '💡';
+            font-size: 20px;
+        }
+
+        /* Progress Bar */
+        #progress-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            cursor: pointer;
+        }
+
+        #progress-bar {
+            height: 100%;
+            background: var(--accent-amber);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+
+
+        /* Opening Scene Specifics */
+        .opening-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: radial-gradient(circle at center, #161b22 0%, #0d1117 100%);
+        }
+
+        .opening-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            width: 80%;
+            margin-bottom: 50px;
+            animation: emerge 1.5s ease-out;
+        }
+
+        @keyframes emerge {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .opening-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            height: 200px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        .opening-card img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Closing Scene Specifics */
+        .closing-scene {
+            background: #0d1117;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 100px;
+        }
+
+        .summary-list {
+            width: 100%;
+            max-width: 800px;
+            list-style: none;
+        }
+
+        .summary-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #30363d;
+            font-size: 24px;
+        }
+
+        .summary-target {
+            color: #8b949e;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .tag-amber {
+            color: var(--amber-highlight);
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-left: 20px;
+            border: 1px solid var(--amber-highlight);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        /* Annotations */
+        .annotation {
+            color: var(--accent-amber);
+            font-style: italic;
+            font-size: 14px;
+            margin-top: 5px;
+            display: block;
+        }
+
+        /* Caption Text */
+        #caption {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            padding: 10px 30px;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: 500;
+            text-align: center;
+            max-width: 80%;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="video-container">
+    <!-- Scene 0: Opening -->
+    <div id="scene-0" class="scene active">
+        <div class="opening-content">
+            <div class="opening-grid" id="opening-grid">
+                <div class="opening-card">
+                    <img src="video_assets/analytics.png" alt="Dashboard">
+                </div>
+                <div class="opening-card">
+                    <img src="video_assets/ptw.png" alt="PTW">
+                </div>
+                <div class="opening-card">
+                    <img src="video_assets/report.png" alt="Observation">
+                </div>
+            </div>
+            <div class="text-overlay" style="position: static; text-align: center; width: 80%;">
+                Edara HSE — a real platform <br> replacing paper-based safety operations.
+            </div>
+            <div class="text-overlay" style="position: static; font-size: 20px; margin-top: 20px; color: #8b949e; width: 80%;">
+                3 React Hooks already running in production.<br>
+                2 more being added next.<br>
+                <span style="color: white; font-weight: 800;">Here's all five.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scene 1: useState -->
+    <div id="scene-1" class="scene">
+        <div class="split-screen">
+            <div class="panel-left">
+                <div class="file-label">CreateReportPage.tsx</div>
+                <pre class="language-tsx"><code>const [form, setForm] = useState({
+    project:     '',
+    department:  '',
+    observation: '',
+    work_type:   '',
+    risk:        '',
+});
+
+const [submitting, setSubmitting] = useState(false);
+const [success, setSuccess]       = useState(false);
+const [error, setError]           = useState('');
+const [images, setImages]         = useState&lt;File[]&gt;([]);</code></pre>
+            </div>
+            <div class="panel-right">
+                <div class="app-preview">
+                    <img src="video_assets/report.png" alt="Observation Form">
+                    <div class="overlay-label">Safety Observation Report</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scene 2: useEffect -->
+    <div id="scene-2" class="scene">
+        <div class="split-screen">
+            <div class="panel-left">
+                <div class="file-label">AnalyticsPage.tsx</div>
+                <pre class="language-tsx"><code>useEffect(() => {
+    fetchAnalytics();
+}, [filters]);</code></pre>
+                <br>
+                <div class="file-label" style="position: static; width: fit-content; margin-bottom: 5px;">AuthContext.tsx</div>
+                <pre class="language-tsx"><code>useEffect(() => {
+    const verifyAuth = async () => {
+        // verify token, restore session
+    };
+    verifyAuth();
+}, []);</code></pre>
+            </div>
+            <div class="panel-right">
+                <div class="app-preview">
+                    <img src="video_assets/analytics.png" alt="Analytics">
+                    <div class="overlay-label">Real-time Analytics Feed</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scene 3: useContext -->
+    <div id="scene-3" class="scene">
+        <div class="split-screen">
+            <div class="panel-left">
+                <div class="file-label">AuthContext.tsx</div>
+                <pre class="language-tsx" id="context-code"><code>// SOLUTION: AuthContext
+export const AuthProvider = ({ children }) => {
+    const [authState, setAuthState] = useState({
+        user: null,
+    });
+    // ...
+}
+
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    return context;
+};</code></pre>
+            </div>
+            <div class="panel-right">
+                <div class="app-preview">
+                    <div style="background: #161b22; height: 100%; display: flex; flex-direction: column; padding: 20px;">
+                        <nav style="display: flex; justify-content: space-between; border-bottom: 1px solid #30363d; padding-bottom: 10px;">
+                            <span style="font-weight: 800; color: var(--accent-amber);">EDARA HSE</span>
+                            <span style="font-size: 12px; color: #8b949e;">Safety Officer Mode</span>
+                        </nav>
+                        <div style="margin-top: 40px; display: flex; flex-direction: column; gap: 10px;">
+                            <div style="width: 100%; height: 40px; background: #30363d; border-radius: 8px;"></div>
+                            <div style="width: 100%; height: 40px; background: #30363d; border-radius: 8px;"></div>
+                            <div style="width: 60%; height: 40px; background: #ea4aaa; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800;">ADMIN PANEL UNLOCKED</div>
+                        </div>
+                    </div>
+                    <div class="overlay-label">Global Context Provider</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scene 4: useRef -->
+    <div id="scene-4" class="scene">
+        <div class="split-screen">
+            <div class="panel-left">
+                <div class="file-label">CreatePTWPage.tsx</div>
+                <pre class="language-tsx"><code>// Coming Next — CreatePTWPage.tsx
+const firstErrorField = useRef&lt;HTMLInputElement&gt;(null);
+
+const handleSubmit = async () => {
+    if (!form.editor_name) {
+        firstErrorField.current?.focus();
+        return;
+    }
+};
+
+return (
+    &lt;input ref={firstErrorField} /&gt;
+);</code></pre>
+            </div>
+            <div class="panel-right">
+                <div class="app-preview">
+                    <img src="video_assets/ptw.png" alt="PTW">
+                    <div class="overlay-label">Permit to Work Migration</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scene 5: useReducer -->
+    <div id="scene-5" class="scene">
+        <div class="split-screen">
+            <div class="panel-left">
+                <div class="file-label">CreatePTWPage.tsx</div>
+                <pre class="language-tsx" id="reducer-code"><code>// After Migration
+type PTWAction = 
+  | { type: 'SET_FIELD' }
+  | { type: 'SUBMIT_START' }
+  | { type: 'SUBMIT_SUCCESS' };
+
+const [state, dispatch] = 
+    useReducer(ptwReducer, initialState);
+
+dispatch({ type: 'SUBMIT_START' });</code></pre>
+            </div>
+            <div class="panel-right">
+                <div class="app-preview">
+                   <div style="background: #161b22; height: 100%; padding: 40px;">
+                        <div style="font-weight: 800; margin-bottom: 20px;">Complex State Unification</div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                             <span style="padding: 5px 10px; background: var(--accent-purple); border-radius: 4px; font-size: 10px;">SUBMIT_START</span>
+                             <span style="padding: 5px 10px; background: #30363d; border-radius: 4px; font-size: 10px;">SUBMIT_SUCCESS</span>
+                             <span style="padding: 5px 10px; background: #30363d; border-radius: 4px; font-size: 10px;">SUBMIT_ERROR</span>
+                        </div>
+                    </div>
+                    <div class="overlay-label">Reducing Complexity</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scene 6: Closing Summary -->
+    <div id="scene-6" class="scene closing-scene">
+        <h2 style="font-family: 'Outfit'; font-size: 40px; font-weight: 900; margin-bottom: 50px;">React Hooks — Know when to use each one</h2>
+        <div class="summary-list">
+            <div class="summary-item">
+                <span>useState</span>
+                <span class="summary-target">what your UI remembers</span>
+            </div>
+            <div class="summary-item">
+                <span>useEffect</span>
+                <span class="summary-target">what talks to the outside world</span>
+            </div>
+            <div class="summary-item">
+                <span>useContext</span>
+                <span class="summary-target">what the whole app shares</span>
+            </div>
+            <div class="summary-item">
+                <span>useRef</span>
+                <span class="summary-target">what the UI doesn't need to know <span class="tag-amber">coming next</span></span>
+            </div>
+            <div class="summary-item">
+                <span>useReducer</span>
+                <span class="summary-target">when state gets complex <span class="tag-amber">coming next</span></span>
+            </div>
+        </div>
+        
+        <div id="closing-outro" style="margin-top: 60px; text-align: center; opacity: 0;">
+            <p style="font-size: 20px; color: #8b949e; margin-bottom: 30px;">
+                3 Hooks in production today.<br>
+                2 more being added as the migration continues.<br>
+                <span style="color: white; font-weight: 800;">This is what learning in public actually looks like.</span>
+            </p>
+            <div style="font-family: 'Outfit'; font-weight: 900; font-size: 24px;">Mohamed Omar Howedy</div>
+            <div style="color: var(--accent-amber); font-weight: 600;">Edara HSE · portfolio.socialfly.net.co</div>
+        </div>
+    </div>
+
+
+    <div id="caption"></div>
+    <div id="bottom-bar">
+        <div id="best-practice-callout" class="best-practice"></div>
+    </div>
+    <div id="progress-container">
+        <div id="progress-bar"></div>
+    </div>
+</div>
+
+<script>
+    const scenes = document.querySelectorAll('.scene');
+    const progressBar = document.getElementById('progress-bar');
+    const bestPractice = document.getElementById('best-practice-callout');
+    const caption = document.getElementById('caption');
+    
+    const timeline = [
+        { scene: 0, duration: 12000, caption: "Edara HSE — a real platform replacing paper-based safety operations.", bp: "" },
+        { scene: 1, duration: 26000, caption: "Every field, every loading state, every error in the HSE report form is controlled by useState.", bp: "One useState per logical concern — never bundle unrelated values into one state object" },
+        { scene: 2, duration: 27000, caption: "useEffect syncs Edara HSE with the outside world — re-fetching analytics when filters change.", bp: "The dependency array is a contract — be explicit about what the effect depends on" },
+        { scene: 3, duration: 20000, caption: "useAuth() reads directly from AuthContext — user identity and permissions available in any component.", bp: "Context is for truly global data — auth, language, theme. Not a replacement for useState" },
+        { scene: 4, duration: 20000, caption: "useRef will give the PTW form direct DOM access — auto-focusing the first empty field.", bp: "useRef is for values the UI doesn't need to know about — DOM references, timers" },
+        { scene: 5, duration: 27000, caption: "useReducer will replace 7 separate state updates with a single dispatch.", bp: "If 3 or more useStates always change together — that's your signal to reach for useReducer" },
+        { scene: 6, duration: 18000, caption: "", bp: "" }
+    ];
+
+    let currentScene = 0;
+    let startTime = Date.now();
+    const totalDuration = timeline.reduce((acc, t) => acc + t.duration, 0);
+
+    function update() {
+        const elapsed = Date.now() - startTime;
+        const progress = (elapsed / totalDuration) * 100;
+        progressBar.style.width = Math.min(progress, 100) + '%';
+
+        // Find current scene
+        let timeAcc = 0;
+        let foundScene = 0;
+        for (let i = 0; i < timeline.length; i++) {
+            if (elapsed < timeAcc + timeline[i].duration) {
+                foundScene = i;
+                break;
+            }
+            timeAcc += timeline[i].duration;
+            foundScene = i;
+        }
+
+        if (foundScene !== currentScene) {
+            scenes[currentScene].classList.remove('active');
+            scenes[currentScene].classList.add('past');
+            currentScene = foundScene;
+            scenes[currentScene].classList.add('active');
+            
+            // Update Best Practice
+            if (timeline[currentScene].bp) {
+                bestPractice.textContent = timeline[currentScene].bp;
+                bestPractice.classList.add('visible');
+            } else {
+                bestPractice.classList.remove('visible');
+            }
+
+            // Show caption
+            if (timeline[currentScene].caption) {
+                caption.textContent = timeline[currentScene].caption;
+                caption.style.display = 'block';
+            } else {
+                caption.style.display = 'none';
+            }
+
+            // Scene specific transitions
+            if (currentScene === 6) {
+                setTimeout(() => {
+                    document.getElementById('closing-outro').style.opacity = '1';
+                    document.getElementById('closing-outro').style.transition = 'opacity 2s ease';
+                }, 6000);
+            }
+        }
+
+        if (elapsed < totalDuration) {
+            requestAnimationFrame(update);
+        } else {
+            progressBar.style.width = '100%';
+        }
+    }
+
+    // Auto-play
+    requestAnimationFrame(update);
+
+</script>
+
+</body>
+</html>
