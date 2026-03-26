@@ -50,7 +50,7 @@ class _LoginPageState extends State<LoginPage> {
                 height: 100,
                 width: 100,
                 decoration: BoxDecoration(
-                  color: Colors.blueAccent.withOpacity(0.1),
+                  color: Colors.blueAccent.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Icon(
