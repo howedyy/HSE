@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 // Core
 import 'core/network/api_client.dart';
+import 'core/widgets/main_navigation.dart';
 
 // Auth
 import 'features/auth/presentation/provider/auth_provider.dart';
@@ -15,28 +16,36 @@ import 'features/auth/presentation/pages/login_page.dart';
 import 'features/dashboard/presentation/provider/dashboard_provider.dart';
 import 'features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'features/dashboard/data/data_sources/dashboard_remote_data_source.dart';
-import 'features/dashboard/presentation/pages/dashboard_page.dart';
 
 // PTW
 import 'features/ptw/presentation/provider/ptw_provider.dart';
 import 'features/ptw/domain/repositories/ptw_repository.dart';
 import 'features/ptw/data/data_sources/ptw_remote_data_source.dart';
 
+// Daily Reports
+import 'features/daily_reports/presentation/provider/report_provider.dart';
+import 'features/daily_reports/domain/repositories/report_repository.dart';
+import 'features/daily_reports/data/data_sources/report_remote_data_source.dart';
+
 void main() {
   final dio = Dio();
   final apiClient = ApiClient(dio: dio);
 
-  // Auth Injection
+  // Auth injection
   final authDataSource = AuthRemoteDataSourceImpl(apiClient: apiClient);
   final authRepository = AuthRepositoryImpl(remoteDataSource: authDataSource);
 
-  // Dashboard Injection
+  // Dashboard injection
   final dashboardDataSource = DashboardRemoteDataSourceImpl(apiClient: apiClient);
   final dashboardRepository = DashboardRepositoryImpl(remoteDataSource: dashboardDataSource);
 
-  // PTW Injection
+  // PTW injection
   final ptwDataSource = PtwRemoteDataSourceImpl(apiClient: apiClient);
   final ptwRepository = PtwRepositoryImpl(remoteDataSource: ptwDataSource);
+
+  // Daily Reports injection
+  final reportDataSource = ReportRemoteDataSourceImpl(apiClient: apiClient);
+  final reportRepository = ReportRepositoryImpl(remoteDataSource: reportDataSource);
 
   runApp(
     MultiProvider(
@@ -49,6 +58,9 @@ void main() {
         ),
         ChangeNotifierProvider(
           create: (_) => PtwProvider(ptwRepository: ptwRepository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ReportProvider(reportRepository: reportRepository),
         ),
       ],
       child: const HSEApp(),
@@ -86,11 +98,8 @@ class AuthWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-
-    if (authProvider.isAuthenticated) {
-      return const DashboardPage();
-    } else {
-      return const LoginPage();
-    }
+    return authProvider.isAuthenticated
+        ? const MainNavigation()
+        : const LoginPage();
   }
 }

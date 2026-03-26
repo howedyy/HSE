@@ -8,7 +8,7 @@ class ApiClient {
   // NOTE: Change this to your computer's IP address if testing on a physical device.
   // Use '10.0.2.2' for Android Emulator.
   // Use 'localhost' for Web or Windows.
-  static const String baseUrl = 'http://10.0.2.2/Edara-HSE111/api/'; 
+  static const String baseUrl = 'http://192.168.1.5/Edara-HSE111/api/'; 
 
   ApiClient({required this.dio}) {
     dio.options.baseUrl = baseUrl;
