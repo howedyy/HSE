@@ -1,44 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLookups } from '../../application/hooks/useLookups';
+import { useLookups, usePTWOptions } from '../../application/hooks/useLookups';
 import { useAuth } from '../context/AuthContext';
 import api from '../../infrastructure/api/client';
 import { ClipboardCheck, ArrowLeft, CheckCircle, Loader2, Paperclip } from 'lucide-react';
-
-// ─── Operation → Risk mapping (mirrors PTW.php JS logic) ─────────────────────
-const operationToRisk: Record<string, string> = {
-    'تقليم الجذور': 'سقوط الاشجار  علي  الافراد والممتلكات',
-    'السباكة': 'انسكاب وتسريب  وغمر',
-    'أعمال حفر': 'عمل في حفر',
-    'أعمال لحام كهربي': 'مخاطر حريق',
-    'العمل على ارتفاع سبايدر': 'سقوط من على ارتفاع',
-    'أعمال رفع أحمال بمعدات ثقيلة': 'ضوضاء',
-    'العمل علي سقالة': 'سقوط من على ارتفاع',
-    'العمل على السلم المفصلى': 'سقوط من على ارتفاع',
-    'أعمال نقل بمعدات ثقيلة': 'ضوضاء',
-    'العمل بداخل الغرف المغلقة': 'عمل في مكان مغلق',
-    'العمل على السلم الهيدروليكي': 'سقوط من على ارتفاع',
-    'إعمال كهرباء الجهد المتوسط': 'مخاطر كهربائية',
-    'العمل بالمواد الخطرة': 'مخاطر كيميائية',
-};
-
-const operationTypes = Object.keys(operationToRisk);
-
-// Section 4 safety measures (mirrors PTW.php checkboxes)
-const safetyOptions = [
-    'الاشراف الدائم',
-    'تحليل مخاطر الوظيفية',
-    'تقييم مخاطر',
-    'عزل مصدر الطاقة',
-    'اختبار غازات',
-    'وسيلة اطفاء حريق مناسبة',
-    'وضع شريط تحذير حول مكان العمل',
-    'وضع اقماع فسفورية حول مكان العمل',
-    'وضع علامة تحذيرية او علامات ارشادية',
-    'محاضرة توعية بالمخاطر',
-    'مهمات وقاية اضافية',
-    'احتياطات سلامة أخرى',
-];
 
 const notes = [
     'يبدأ العمل فقط بإصدار هذا التصريح و إخطار إدارة الصيانة عند القيام بأي أعمال حفر قد تؤثر على البنية التحتية أو شبكة الكهرباء.',
@@ -59,6 +24,7 @@ const sectionHead = "text-xs uppercase tracking-wider text-indigo-600 font-semib
 const CreatePTWPage: React.FC = () => {
     const navigate = useNavigate();
     const { departments, projects } = useLookups();
+    const { operationTypes, safetyMeasures, isLoading: configLoading } = usePTWOptions();
     const { hasPermission, user } = useAuth();
 
     const today = new Date().toISOString().split('T')[0];
@@ -108,7 +74,8 @@ const CreatePTWPage: React.FC = () => {
 
     const handleOperationChange = (op: string) => {
         set('operation_type', op);
-        set('risk_assessment', operationToRisk[op] ?? '');
+        const selected = operationTypes.find(x => x.operation_name === op);
+        set('risk_assessment', selected?.risk_assessment ?? '');
     };
 
     const toggleSafety = (option: string) => {
@@ -320,7 +287,9 @@ const CreatePTWPage: React.FC = () => {
                         <label className={labelClass}>نوع العملية (Operation Type)</label>
                         <select required className={selectClass} value={form.operation_type} onChange={e => handleOperationChange(e.target.value)}>
                             <option value="">اختر نوع العملية</option>
-                            {operationTypes.map(op => <option key={op} value={op}>{op}</option>)}
+                            {operationTypes.filter(op => op.is_active === 1).map(op => (
+                                <option key={op.id} value={op.operation_name}>{op.operation_name}</option>
+                            ))}
                         </select>
                     </div>
 
@@ -344,16 +313,16 @@ const CreatePTWPage: React.FC = () => {
                     <div className={sectionHead}>Section 4 — الإجراءات المتخذة</div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6">
-                        {safetyOptions.map(opt => (
-                            <label key={opt} className="flex items-center gap-3 cursor-pointer group">
+                        {safetyMeasures.filter(sm => sm.is_active === 1).map(opt => (
+                            <label key={opt.id} className="flex items-center gap-3 cursor-pointer group">
                                 <input
                                     type="checkbox"
-                                    checked={safetyChecked.includes(opt)}
-                                    onChange={() => toggleSafety(opt)}
+                                    checked={safetyChecked.includes(opt.measure_name)}
+                                    onChange={() => toggleSafety(opt.measure_name)}
                                     className="w-4 h-4 accent-indigo-600"
                                 />
                                 <span className="text-sm text-gray-700 group-hover:text-indigo-600 transition-colors" dir="rtl">
-                                    {opt}
+                                    {opt.measure_name}
                                 </span>
                             </label>
                         ))}

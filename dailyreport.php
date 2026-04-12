@@ -26,6 +26,29 @@ if ($edit_id > 0) {
     $edit_data = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 }
+
+// Fetch dynamic observation types and work types
+$observation_options = [];
+$mapping = [];
+$res = $conn->query("
+    SELECT c.name as cat, s.name as sub 
+    FROM report_observation_types c 
+    LEFT JOIN report_work_types s ON s.observation_type_id = c.id 
+    WHERE c.status = 1 AND (s.status = 1 OR s.status IS NULL)
+    ORDER BY c.id, s.id
+");
+if ($res) {
+    while($row = $res->fetch_assoc()) {
+        $cat = $row['cat'];
+        if(!isset($mapping[$cat])) {
+            $mapping[$cat] = [];
+            $observation_options[] = $cat;
+        }
+        if($row['sub']) {
+            $mapping[$cat][] = $row['sub'];
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -141,11 +164,13 @@ if ($edit_id > 0) {
             </div>
             <div class="form-group-DR">
                 <label for="observation">طبيعه العمل:</label>
-                <select id="observation" name="observation" required onchange="updateWorkType(this.value)">
+                <select id="observation" name="observation" required onchange="populateWorkTypes(this.value)">
                     <option value="">اختار</option>
-                    <option value="متابعه الاعمال" <?= ($edit_data && $edit_data['observation'] == 'متابعه الاعمال') ? 'selected' : '' ?>>متابعه الاعمال</option>
-                    <option value="فحص الموقع" <?= ($edit_data && $edit_data['observation'] == 'فحص الموقع') ? 'selected' : '' ?>>فحص الموقع</option>
-                    <option value="مخالفات السلوك" <?= ($edit_data && $edit_data['observation'] == 'مخالفات السلوك') ? 'selected' : '' ?>>مخالفات السلوك</option>
+                    <?php foreach($observation_options as $opt): ?>
+                    <option value="<?= htmlspecialchars($opt) ?>" <?= ($edit_data && $edit_data['observation'] == $opt) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($opt) ?>
+                    </option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <div class="form-group-DR">
@@ -232,23 +257,7 @@ if ($edit_id > 0) {
                 }
             })();
             
-            var workTypeMapping = {
-                "متابعه الاعمال": [
-                    "اعمال روتينية", "تصريح عمل في اماكن محصورة", "تصريح عمل على ارتفاع", 
-                    "اعمال خطرة بدون تصريح", "تصريح عمل بمواد كميائية خطرة", "تصريح حفر", 
-                    "تصريح عزل طاقه", "تصريح اعمال ساخنه", "تصريح رفع"
-                ],
-                "فحص الموقع": [
-                    "فحص انظمة واجهزة الاطفاء", "فحص التوصيلات الكهربائية", "فحص انظمة السباكة", 
-                    "فحص الحجر الهاشمي والرخام والجبسم بورد", "فحص الزجاج السيكوريت", 
-                    "فحص الديكوريشن الخشب واللوفارات الالومنيوم", "فحص حالة التخزين", 
-                    "فحص النظافة العامة للمكان", "فحص حالة الطريق", "فحص حالة اللاند اسكيب", 
-                    "فحص البنية التحتية", "فحص وجود حشارات او حيوانات ضارة"
-                ],
-                "مخالفات السلوك": [
-                    "مخالفة قيادة مركبة", "عدم ارتداء مهمات الوقاية الشخصية", "التصرف بشكل غير امن"
-                ]
-            };
+            var workTypeMapping = <?= json_encode($mapping, JSON_UNESCAPED_UNICODE) ?>;
 
             function populateWorkTypes(selectedValue, preSelected = '') {
                 var workTypeSelect = document.getElementById('work_type');

@@ -41,7 +41,8 @@ $sql = "SELECT dr.id, dr.date, pr.project_name, dp.department_name, dr.work_type
         dr.observation_description, dr.description, dr.observation, dr.operation_corrective,
         dr.report_status, dr.closed_at, dr.image_upload, dr.closure_notes, dr.closure_image,
         dr.email_sent, dr.user_id,
-        u.username as created_by, u2.username as closed_by_username
+        u.username as created_by, u2.username as closed_by_username,
+        (SELECT COUNT(*) FROM observation_comments WHERE report_id = dr.id) as comments_count
         FROM daily_report dr
         LEFT JOIN project pr ON dr.project = pr.id
         LEFT JOIN department dp ON dr.department = dp.id

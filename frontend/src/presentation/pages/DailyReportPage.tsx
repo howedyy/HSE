@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../../infrastructure/api/client';
 import {
     FileText, Filter, ChevronLeft, ChevronRight,
-    CheckCircle, Clock, Search, X, Plus, Eye, Trash2, Loader2, Image as ImageIcon, Mail, Check, Pencil
+    CheckCircle, Clock, Search, X, Plus, Eye, Trash2, Loader2, Image as ImageIcon, Mail, Check, Pencil, MessageSquare, Send
 } from 'lucide-react';
 import { compressImage } from '../../shared/utils/imageCompression';
 
@@ -42,6 +42,12 @@ const DailyReportPage: React.FC = () => {
     const [isSubmittingClosure, setIsSubmittingClosure] = useState(false);
     const [isCompressing, setIsCompressing] = useState(false);
     const [isEmailing, setIsEmailing] = useState<number | null>(null);
+    const [comments, setComments] = useState<any[]>([]);
+    const [newComment, setNewComment] = useState('');
+    const [commentImages, setCommentImages] = useState<File[]>([]);
+    const [isLoadingComments, setIsLoadingComments] = useState(false);
+    const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
 
     const { reports, total, totalPages, isLoading, refetch } = useDailyReports(filters, page);
     const { projects, departments, users } = useLookups();
@@ -49,6 +55,10 @@ const DailyReportPage: React.FC = () => {
     const canDelete = hasPermission('dailyreport_overview.php', 'delete');
     const canClose = hasPermission('dailyreport_overview.php', 'submit');
     const canSendEmail = hasPermission('dailyreport_overview.php', 'send_email') || hasPermission('dailyreport_overview.php', 'send email');
+    const canAddComment = hasPermission('dailyreport_overview.php', 'add_comment');
+    const canDeleteComment = hasPermission('dailyreport_overview.php', 'delete_comment');
+    const canExport = hasPermission('dailyreport_overview.php', 'export_excel') || hasPermission('dailyreport_overview.php', 'export');
+
 
     const updateFilter = (key: string, value: string) => {
         setPage(1);
@@ -124,6 +134,82 @@ const DailyReportPage: React.FC = () => {
         }
     };
 
+    const fetchComments = async (reportId: number) => {
+        setIsLoadingComments(true);
+        try {
+            const data: any = await api.get(`/reports/get_comments?report_id=${reportId}`);
+            setComments(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error('Failed to fetch comments:', err);
+        } finally {
+            setIsLoadingComments(false);
+        }
+    };
+
+    const handleAddComment = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newComment.trim() && commentImages.length === 0) return;
+
+        setIsSubmittingComment(true);
+        try {
+            const formData = new FormData();
+            formData.append('report_id', String(selectedReport.id));
+            formData.append('comment_text', newComment);
+            
+            for (let i = 0; i < commentImages.length; i++) {
+                formData.append('comment_image[]', commentImages[i]);
+            }
+
+            await api.post('/reports/add_comment', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            setNewComment('');
+            setCommentImages([]);
+            fetchComments(selectedReport.id);
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Failed to add comment');
+        } finally {
+            setIsSubmittingComment(false);
+        }
+    };
+
+    const handleDeleteComment = async (commentId: number) => {
+        if (!window.confirm(t('dailyReport.confirm.deleteComment', 'Are you sure you want to delete this comment?'))) return;
+        try {
+            await api.delete(`/reports/delete_comment?id=${commentId}`);
+            fetchComments(selectedReport.id);
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Failed to delete comment');
+        }
+    };
+
+    const handleCommentImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files) return;
+        const files = Array.from(e.target.files);
+        const compressedFiles = await Promise.all(
+            files.map(file => compressImage(file))
+        );
+        setCommentImages(prev => [...prev, ...compressedFiles as any]);
+    };
+
+    const removeCommentImage = (index: number) => {
+        setCommentImages(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleSelectReport = (report: any) => {
+        setSelectedReport(report);
+        if (report) {
+            fetchComments(report.id);
+        }
+    };
+
+    const handleExport = () => {
+        const queryParams = new URLSearchParams(filters);
+        const exportUrl = `${import.meta.env.VITE_API_BASE_URL}/export_daily_report_all.php?${queryParams.toString()}`;
+        window.open(exportUrl, '_blank');
+    };
+
     return (
         <div className="max-w-full mx-auto space-y-6">
             {/* Header */}
@@ -142,6 +228,14 @@ const DailyReportPage: React.FC = () => {
                         {showFilters ? <X size={16} /> : <Filter size={16} />}
                         {showFilters ? t('common.filter') : t('common.filter')}
                     </button>
+                    {canExport && (
+                        <button
+                            onClick={handleExport}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 transition-colors shadow-sm"
+                        >
+                            <FileText size={16} /> {t('dailyReport.exportExcel')}
+                        </button>
+                    )}
                     {canSubmit && (
                         <button onClick={() => navigate('/reports/new')} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm">
                             <Plus size={16} /> {t('dailyReport.newReport')}
@@ -242,6 +336,7 @@ const DailyReportPage: React.FC = () => {
                                     <th className="text-left px-5 py-3 text-[10px] uppercase tracking-widest text-gray-400 font-bold">{t('dailyReport.table.risk')}</th>
                                     <th className="text-left px-5 py-3 text-[10px] uppercase tracking-widest text-gray-400 font-bold">{t('dailyReport.table.status')}</th>
                                     <th className="text-left px-5 py-3 text-[10px] uppercase tracking-widest text-gray-400 font-bold">{t('dailyReport.table.createdBy')}</th>
+                                    <th className="text-center px-5 py-3 text-[10px] uppercase tracking-widest text-gray-400 font-bold">{t('dailyReport.details.commentsCount')}</th>
                                     <th className="text-right px-5 py-3 text-[10px] uppercase tracking-widest text-gray-400 font-bold">{t('dailyReport.table.actions')}</th>
                                 </tr>
                             </thead>
@@ -260,10 +355,19 @@ const DailyReportPage: React.FC = () => {
                                         </td>
                                         <td className="px-5 py-4">{statusBadge(r.report_status, t)}</td>
                                         <td className="px-5 py-4 text-gray-600 font-medium">{r.created_by}</td>
+                                        <td className="px-5 py-4 text-center">
+                                            {r.comments_count > 0 && (
+                                                <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-bold">
+                                                    <MessageSquare size={10} />
+                                                    {r.comments_count}
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="px-5 py-4">
                                             <div className="flex items-center justify-end gap-1">
                                                 <button
-                                                    onClick={() => setSelectedReport(r)}
+                                                    onClick={() => handleSelectReport(r)}
+
                                                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
                                                     title={t('dailyReport.actions.viewDetails')}
                                                 >
@@ -346,7 +450,8 @@ const DailyReportPage: React.FC = () => {
                 <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
                     <div className="bg-white rounded-[2rem] w-full max-w-3xl my-8 shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden">
                         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-8 text-white relative">
-                            <button onClick={() => setSelectedReport(null)} className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors text-white">
+                            <button onClick={() => handleSelectReport(null)} className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors text-white">
+
                                 <X size={20} />
                             </button>
                             <div className="flex items-start gap-4">
@@ -485,12 +590,135 @@ const DailyReportPage: React.FC = () => {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Comments Section */}
+                            <div className="pt-10 border-t border-gray-100 space-y-8">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                        <MessageSquare size={22} className="text-blue-600" />
+                                        {t('dailyReport.details.comments', 'Discussion & Comments')}
+                                    </h3>
+                                    <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">
+                                        {comments.length} {t('dailyReport.details.commentsCount', 'Comments')}
+                                    </span>
+                                </div>
+
+                                {/* Comment List */}
+                                <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {isLoadingComments ? (
+                                        <div className="flex flex-col items-center py-10 text-gray-400">
+                                            <Loader2 size={32} className="animate-spin mb-2" />
+                                            <p className="text-sm font-medium">Loading conversation...</p>
+                                        </div>
+                                    ) : comments.length === 0 ? (
+                                        <div className="text-center py-10 bg-gray-50 rounded-[2rem] border border-dashed border-gray-200">
+                                            <MessageSquare size={32} className="mx-auto text-gray-300 mb-2" />
+                                            <p className="text-gray-500 text-sm">{t('dailyReport.messages.noComments', 'No comments yet. Start the discussion!')}</p>
+                                        </div>
+                                    ) : (
+                                        comments.map((comment) => (
+                                            <div key={comment.id} className={`flex gap-4 ${comment.is_owner ? 'flex-row-reverse' : ''}`}>
+                                                <div className="flex-shrink-0">
+                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm ${comment.is_owner ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                                                        {comment.username.substring(0, 1).toUpperCase()}
+                                                    </div>
+                                                </div>
+                                                <div className={`flex-1 space-y-2 max-w-[85%] ${comment.is_owner ? 'text-right' : ''}`}>
+                                                    <div className={`flex items-center gap-2 mb-1 ${comment.is_owner ? 'justify-end' : ''}`}>
+                                                        <span className="font-bold text-sm text-gray-900">{comment.username}</span>
+                                                        <span className="text-[10px] text-gray-400 font-medium">
+                                                            {new Date(comment.created_at).toLocaleString(i18n.language === 'en' ? 'en-US' : 'ar-EG')}
+                                                        </span>
+                                                        {comment.is_owner && canDeleteComment && (
+                                                            <button onClick={() => handleDeleteComment(comment.id)} className="p-1 text-red-400 hover:text-red-600 transition-colors">
+                                                                <Trash2 size={12} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <div className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${comment.is_owner ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white border border-gray-100 text-gray-700 rounded-tl-none'}`}>
+                                                        {comment.comment_text}
+                                                    </div>
+                                                    {comment.images && comment.images.length > 0 && (
+                                                        <div className={`flex flex-wrap gap-2 mt-2 ${comment.is_owner ? 'justify-end' : ''}`}>
+                                                            {comment.images.map((img: string, i: number) => (
+                                                                <img
+                                                                    key={i}
+                                                                    src={`${import.meta.env.VITE_API_BASE_URL}/assests/uploads/comments/${img}`}
+                                                                    alt="Attachment"
+                                                                    className="w-20 h-20 object-cover rounded-lg border border-gray-200 cursor-zoom-in hover:opacity-80 transition-opacity"
+                                                                    onClick={() => window.open(`${import.meta.env.VITE_API_BASE_URL}/assests/uploads/comments/${img}`)}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {/* Add Comment Form */}
+                                {canAddComment && (
+                                    <form onSubmit={handleAddComment} className="space-y-4 pt-4">
+                                        <div className="relative">
+                                            <textarea
+                                                value={newComment}
+                                                onChange={(e) => setNewComment(e.target.value)}
+                                                placeholder={t('dailyReport.comments.placeholder', 'Write a comment...')}
+                                                className="w-full px-5 py-4 rounded-[1.5rem] border border-gray-200 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all resize-none text-sm font-medium pr-14"
+                                                rows={2}
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={isSubmittingComment || (!newComment.trim() && commentImages.length === 0)}
+                                                className="absolute right-3 bottom-3 p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all disabled:opacity-50 shadow-lg shadow-blue-500/30"
+                                            >
+                                                {isSubmittingComment ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                                            </button>
+                                        </div>
+
+                                        {/* Image Attachments */}
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <label className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-600 cursor-pointer hover:bg-gray-50 transition-colors">
+                                                <ImageIcon size={14} className="text-blue-600" />
+                                                {t('dailyReport.comments.attachImage', 'Attach Images')}
+                                                <input
+                                                    type="file"
+                                                    multiple
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={handleCommentImageChange}
+                                                />
+                                            </label>
+
+                                            {commentImages.map((file, index) => (
+                                                <div key={index} className="relative group">
+                                                    <img
+                                                        src={URL.createObjectURL(file)}
+                                                        alt="Preview"
+                                                        className="w-12 h-12 object-cover rounded-xl border border-blue-200 shadow-sm"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeCommentImage(index)}
+                                                        className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <X size={10} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </form>
+                                )}
+                            </div>
                         </div>
+
 
                         {/* Bottom Close Button */}
                         <div className="p-8 border-t border-gray-100 bg-gray-50 flex justify-end">
                             <button
-                                onClick={() => setSelectedReport(null)}
+                                onClick={() => handleSelectReport(null)}
+
                                 className="px-6 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-colors shadow-lg shadow-gray-200"
                             >
                                 {t('dailyReport.details.closeDetails')}

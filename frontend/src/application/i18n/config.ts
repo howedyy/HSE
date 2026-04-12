@@ -297,7 +297,9 @@ const resources = {
           "resolutionVerified": "Resolution Verified",
           "actionTaken": "Action Taken",
           "closedBy": "Closed By Portfolio",
-          "closeDetails": "Close Details"
+          "closeDetails": "Close Details",
+          "comments": "Discussion & Comments",
+          "commentsCount": "Comments"
         },
         "resolution": {
           "title": "Resolve Hazard",
@@ -312,13 +314,20 @@ const resources = {
         },
         "confirm": {
           "delete": "Are you sure you want to delete this report?",
-          "email": "Are you sure you want to send the observation report via email?"
+          "email": "Do you want to send this report via email?",
+          "deleteComment": "Are you sure you want to delete this comment?"
         },
+        "exportExcel": "Export to Excel",
         "messages": {
           "emailSuccess": "Success: Email has been sent successfully.",
           "emailFailed": "Dispatch failed: {{error}}",
           "deleteFailed": "Delete failed",
-          "closureFailed": "Closure failed"
+          "closureFailed": "Closure failed",
+          "noComments": "No comments yet. Start the discussion!"
+        },
+        "comments": {
+          "placeholder": "Write a comment...",
+          "attachImage": "Attach Images"
         }
       },
       "roles": {
@@ -338,7 +347,23 @@ const resources = {
         "subtitle": "Administrative Oversight",
         "tabs": {
           "users": "Add New User",
-          "projects": "Project Management"
+          "projects": "Project Management",
+          "reportOptions": "Report Options"
+        },
+        "reportOptions": {
+          "title": "Report Configuration",
+          "subtitle": "Manage observation categories and work descriptions.",
+          "addObservation": "Add Observation Type",
+          "obsPlaceholder": "e.g. Site Inspection...",
+          "addWorkType": "Add Work Description",
+          "workTypePlaceholder": "e.g. Electrical Check...",
+          "status": "Status",
+          "actions": "Actions",
+          "noOptions": "No report options configured.",
+          "observationType": "Observation Type",
+          "workDescriptions": "Work Descriptions",
+          "toggleFailed": "Failed to update status",
+          "createFailed": "Failed to create option"
         },
         "addUserTitle": "New User Profile",
         "addUserSubtitle": "Create a system-level account with specific permissions.",
@@ -661,7 +686,9 @@ const resources = {
           "resolutionVerified": "تم التحقق من الحل",
           "actionTaken": "الإجراء المتبع",
           "closedBy": "أغلق بواسطة",
-          "closeDetails": "إغلاق التفاصيل"
+          "closeDetails": "إغلاق التفاصيل",
+          "comments": "المناقشة والتعليقات",
+          "commentsCount": "تعليقات"
         },
         "resolution": {
           "title": "حل الخطر",
@@ -675,14 +702,21 @@ const resources = {
           "submit": "حل الملاحظة"
         },
         "confirm": {
-          "delete": "هل أنت متأكد أنك تريد حذف هذا التقرير؟",
-          "email": "هل أنت متأكد أنك تريد إرسال تقرير الملاحظة عبر البريد الإلكتروني؟"
+          "delete": "هل أنت متأكد من حذف هذا التقرير؟",
+          "email": "هل تريد إرسال هذا التقرير عبر البريد الإلكتروني؟",
+          "deleteComment": "هل أنت متأكد من حذف هذا التعليق؟"
         },
+        "exportExcel": "تصدير إلى إكسل",
         "messages": {
           "emailSuccess": "نجاح: تم إرسال البريد الإلكتروني بنجاح.",
           "emailFailed": "فشل الإرسال: {{error}}",
           "deleteFailed": "فشل الحذف",
-          "closureFailed": "فشل الإغلاق"
+          "closureFailed": "فشل الإغلاق",
+          "noComments": "لا توجد تعليقات بعد. ابدأ المناقشة!"
+        },
+        "comments": {
+          "placeholder": "اكتب تعليقاً...",
+          "attachImage": "إرفاق صور"
         }
       },
       "roles": {
@@ -702,7 +736,23 @@ const resources = {
         "subtitle": "الرقابة الإدارية",
         "tabs": {
           "users": "إضافة مستخدم جديد",
-          "projects": "إدارة المشاريع"
+          "projects": "إدارة المشاريع",
+          "reportOptions": "خيارات التقارير"
+        },
+        "reportOptions": {
+          "title": "إعدادات التقارير",
+          "subtitle": "إدارة فئات الملاحظات وأوصاف العمل.",
+          "addObservation": "إضافة نوع ملاحظة",
+          "obsPlaceholder": "مثال: فحص الموقع...",
+          "addWorkType": "إضافة وصف عمل",
+          "workTypePlaceholder": "مثال: فحص التوصيلات...",
+          "status": "الحالة",
+          "actions": "الإجراءات",
+          "noOptions": "لم يتم تكوين خيارات تقارير.",
+          "observationType": "نوع الملاحظة",
+          "workDescriptions": "أوصاف العمل",
+          "toggleFailed": "فشل تحديث الحالة",
+          "createFailed": "فشل إنشاء الخيار"
         },
         "addUserTitle": "ملف تعريف مستخدم جديد",
         "addUserSubtitle": "إنشاء حساب على مستوى النظام مع أذونات محددة.",

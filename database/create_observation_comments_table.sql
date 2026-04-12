@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS `observation_comments` (
   `report_id` INT(11) NOT NULL,
   `user_id` INT(11) NOT NULL,
   `comment_text` TEXT NOT NULL,
+  `image_path` TEXT DEFAULT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),

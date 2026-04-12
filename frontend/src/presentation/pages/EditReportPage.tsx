@@ -1,28 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useLookups } from '../../application/hooks/useLookups';
+import { useLookups, useReportOptions } from '../../application/hooks/useLookups';
 import { useAuth } from '../context/AuthContext';
 import api from '../../infrastructure/api/client';
 import { FileText, ArrowLeft, CheckCircle, Loader2, Image as ImageIcon, X, AlertCircle } from 'lucide-react';
 import { compressImage } from '../../shared/utils/imageCompression';
 
-const workTypeMapping: Record<string, string[]> = {
-    "متابعه الاعمال": [
-        "اعمال روتينية", "تصريح عمل في اماكن محصورة", "تصريح عمل على ارتفاع",
-        "اعمال خطرة بدون تصريح", "تصريح عمل بمواد كميائية خطرة", "تصريح حفر",
-        "تصريح عزل طاقه", "تصريح اعمال ساخنه", "تصريح رفع"
-    ],
-    "فحص الموقع": [
-        "فحص انظمة واجهزة الاطفاء", "فحص التوصيلات الكهربائية", "فحص انظمة السباكة",
-        "فحص الحجر الهاشمي والرخام والجبسم بورد", "فحص الزجاج السيكوريت",
-        "فحص الديكوريشن الخشب واللوفارات الالومنيوم", "فحص حالة التخزين",
-        "فحص النظافة العامة للمكان", "فحص حالة الطريق", "فحص حالة اللاند اسكيب",
-        "فحص البنية التحتية", "فحص وجود حشارات او حيوانات ضارة"
-    ],
-    "مخالفات السلوك": [
-        "مخالفة قيادة مركبة", "عدم ارتداء مهمات الوقاية الشخصية", "التصرف بشكل غير امن"
-    ],
-};
+
 
 const selectClass = "w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
 const labelClass = "block text-sm font-semibold text-gray-700 mb-1.5";
@@ -31,6 +15,7 @@ const EditReportPage: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const { projects, departments } = useLookups();
+    const { observationTypes, isLoading: loadingOptions } = useReportOptions();
     const { user } = useAuth();
     const [form, setForm] = useState({
         project: '', department: '', observation: '', work_type: '', risk: '',
@@ -143,6 +128,10 @@ const EditReportPage: React.FC = () => {
         }
     };
 
+    // Find work types for currently selected observation type
+    const selectedObsType = observationTypes.find(o => o.name === form.observation);
+    const activeWorkTypes = (selectedObsType?.work_types ?? []).filter(wt => wt.status === 1);
+
     if (loading) {
         return (
             <div className="max-w-lg mx-auto text-center py-20 flex flex-col items-center gap-4">
@@ -203,11 +192,20 @@ const EditReportPage: React.FC = () => {
 
                     <div>
                         <label className={labelClass}>Observation Type (طبيعه العمل)</label>
-                        <select required value={form.observation} onChange={e => { set('observation', e.target.value); set('work_type', ''); }} className={selectClass}>
-                            <option value="">Select</option>
-                            <option value="متابعه الاعمال">متابعه الاعمال</option>
-                            <option value="فحص الموقع">فحص الموقع</option>
-                            <option value="مخالفات السلوك">مخالفات السلوك</option>
+                        <select
+                            required
+                            value={form.observation}
+                            onChange={e => { set('observation', e.target.value); set('work_type', ''); }}
+                            className={selectClass}
+                            disabled={loadingOptions}
+                        >
+                            <option value="">{loadingOptions ? 'Loading...' : 'Select'}</option>
+                            {observationTypes
+                                .filter(o => o.status === 1)
+                                .map(o => (
+                                    <option key={o.id} value={o.name}>{o.name}</option>
+                                ))
+                            }
                         </select>
                     </div>
 
@@ -216,7 +214,9 @@ const EditReportPage: React.FC = () => {
                             <label className={labelClass}>Work Description (وصف العمل)</label>
                             <select required value={form.work_type} onChange={e => set('work_type', e.target.value)} className={selectClass}>
                                 <option value="">Select</option>
-                                {workTypeMapping[form.observation]?.map(wt => <option key={wt} value={wt}>{wt}</option>)}
+                                {activeWorkTypes.map(wt => (
+                                    <option key={wt.id} value={wt.name}>{wt.name}</option>
+                                ))}
                             </select>
                         </div>
                     )}

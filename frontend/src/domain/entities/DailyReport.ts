@@ -14,6 +14,7 @@ export interface DailyReport {
     image_upload: string | null;
     created_by: string;
     closed_by_username: string | null;
+    comments_count: number;
 }
 
 export interface ReportListResponse {

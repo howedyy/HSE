@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLookups } from '../../application/hooks/useLookups';
+import { useLookups, useReportOptions, usePTWOptions } from '../../application/hooks/useLookups';
 import { usePermissions } from '../../application/hooks/useUsers';
 import api from '../../infrastructure/api/client';
 import {
@@ -8,7 +8,7 @@ import {
     User, Lock, Briefcase, Mail, Check,
     Key, ChevronRight, RefreshCw,
     Plus, Power, Info, Save, CheckCircle2,
-    XCircle, AlertCircle
+    XCircle, AlertCircle, ListTree, PlusCircle, Trash2, ClipboardCheck
 } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -463,14 +463,338 @@ const ProjectsTab: React.FC = () => {
     );
 };
 
+// ─── Report Options Tab ───────────────────────────────────────────────────────
+const ReportOptionsTab: React.FC = () => {
+    const { t } = useTranslation();
+    const { observationTypes, isLoading, refetch } = useReportOptions();
+    const [newObsName, setNewObsName] = useState('');
+    const [newWorkNames, setNewWorkNames] = useState<Record<number, string>>({});
+    const [loading, setLoading] = useState<string | null>(null);
+    const [toast, setToast] = useState<Toast>(null);
+
+    const handleAddObservation = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newObsName.trim()) return;
+        setLoading('add-obs');
+        try {
+            await api.post('/report_options/create', { type: 'observation', name: newObsName.trim() });
+            setNewObsName('');
+            refetch();
+            setToast({ type: 'success', message: t('common.success', 'Success') });
+        } catch {
+            setToast({ type: 'error', message: t('settings.reportOptions.createFailed', 'Failed to create') });
+        } finally {
+            setLoading(null);
+        }
+    };
+
+    const handleAddWorkType = async (obsId: number) => {
+        const name = newWorkNames[obsId]?.trim();
+        if (!name) return;
+        setLoading(`add-work-${obsId}`);
+        try {
+            await api.post('/report_options/create', { type: 'work_type', name, observation_type_id: obsId });
+            setNewWorkNames(prev => ({ ...prev, [obsId]: '' }));
+            refetch();
+            setToast({ type: 'success', message: t('common.success', 'Success') });
+        } catch {
+            setToast({ type: 'error', message: t('settings.reportOptions.createFailed', 'Failed to create') });
+        } finally {
+            setLoading(null);
+        }
+    };
+
+    const handleToggle = async (type: 'observation' | 'work_type', id: number) => {
+        setLoading(`toggle-${type}-${id}`);
+        try {
+            await api.post('/report_options/toggle', { type, id });
+            refetch();
+        } catch {
+            setToast({ type: 'error', message: t('settings.reportOptions.toggleFailed', 'Failed to update status') });
+        } finally {
+            setLoading(null);
+        }
+    };
+
+    return (
+        <>
+            <ToastNotif toast={toast} onDismiss={() => setToast(null)} />
+            <div className="space-y-6">
+                {/* Add Observation Type */}
+                <div className="bg-white rounded-3xl border border-gray-100 p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                        <PlusCircle size={16} className="text-blue-600" />
+                        <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider">
+                            {t('settings.reportOptions.addObservation', 'Add Observation Type')}
+                        </h3>
+                    </div>
+                    <form onSubmit={handleAddObservation} className="flex gap-3">
+                        <input
+                            type="text"
+                            value={newObsName}
+                            onChange={e => setNewObsName(e.target.value)}
+                            placeholder={t('settings.reportOptions.obsPlaceholder', 'e.g. Site Inspection...')}
+                            className="flex-1 px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 font-semibold text-gray-700 outline-none transition-all text-sm"
+                            required
+                        />
+                        <button type="submit" disabled={loading === 'add-obs'}
+                            className="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-100">
+                            {loading === 'add-obs' ? <RefreshCw size={16} className="animate-spin" /> : <Plus size={16} />}
+                            {t('common.add', 'Add')}
+                        </button>
+                    </form>
+                </div>
+
+                {/* List of Observation Types */}
+                {isLoading ? (
+                    <div className="space-y-4">
+                        {[...Array(3)].map((_, i) => <div key={i} className="h-32 bg-gray-50 rounded-3xl animate-pulse" />)}
+                    </div>
+                ) : observationTypes.length === 0 ? (
+                    <div className="bg-white rounded-3xl border border-gray-100 p-12 text-center">
+                        <ListTree size={48} className="text-gray-200 mx-auto mb-4" />
+                        <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">
+                            {t('settings.reportOptions.noOptions', 'No report options configured.')}
+                        </p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 gap-6">
+                        {observationTypes.map(obs => (
+                            <div key={obs.id} className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+                                <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-2 h-2 rounded-full ${obs.status === 1 ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+                                        <h4 className="font-black text-gray-900 text-sm uppercase tracking-tight">{obs.name}</h4>
+                                    </div>
+                                    <button
+                                        onClick={() => handleToggle('observation', obs.id)}
+                                        disabled={loading === `toggle-observation-${obs.id}`}
+                                        className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                                            obs.status === 1 ? 'bg-red-50 text-red-500 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                        }`}
+                                    >
+                                        {loading === `toggle-observation-${obs.id}` ? <RefreshCw size={14} className="animate-spin" /> : obs.status === 1 ? t('settings.deactivate', 'Deactivate') : t('settings.activate', 'Activate')}
+                                    </button>
+                                </div>
+                                
+                                <div className="p-6 space-y-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {obs.work_types.map(wt => (
+                                            <div key={wt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-100 hover:border-blue-200 transition-colors">
+                                                <span className={`text-[11px] font-bold ${wt.status === 1 ? 'text-gray-700' : 'text-gray-400 line-through'}`}>{wt.name}</span>
+                                                <button
+                                                    onClick={() => handleToggle('work_type', wt.id)}
+                                                    disabled={loading === `toggle-work_type-${wt.id}`}
+                                                    className={`p-1.5 rounded-lg transition-colors ${wt.status === 1 ? 'text-red-400 hover:bg-red-50' : 'text-emerald-500 hover:bg-emerald-50'}`}
+                                                >
+                                                    {loading === `toggle-work_type-${wt.id}` ? <RefreshCw size={12} className="animate-spin" /> : <Power size={12} />}
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Add Work Type for this category */}
+                                    <div className="flex gap-2 pt-2">
+                                        <input
+                                            type="text"
+                                            value={newWorkNames[obs.id] || ''}
+                                            onChange={e => setNewWorkNames(prev => ({ ...prev, [obs.id]: e.target.value }))}
+                                            placeholder={t('settings.reportOptions.workTypePlaceholder', 'Add work description...')}
+                                            className="flex-1 px-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-600 font-semibold text-gray-700 outline-none transition-all text-xs"
+                                        />
+                                        <button
+                                            onClick={() => handleAddWorkType(obs.id)}
+                                            disabled={loading === `add-work-${obs.id}`}
+                                            className="px-4 py-2 bg-gray-900 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-colors disabled:opacity-50"
+                                        >
+                                            {loading === `add-work-${obs.id}` ? <RefreshCw size={14} className="animate-spin" /> : <Plus size={14} />}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </>
+    );
+};
+
+// ─── PTW Options Tab ──────────────────────────────────────────────────────────
+const PTWOptionsTab: React.FC = () => {
+    const { t } = useTranslation();
+    const { operationTypes, safetyMeasures, isLoading, refetch } = usePTWOptions();
+    const [newOp, setNewOp] = useState({ name: '', risk: '' });
+    const [newMeasure, setNewMeasure] = useState('');
+    const [loading, setLoading] = useState<string | null>(null);
+    const [toast, setToast] = useState<Toast>(null);
+
+    const handleAddOp = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newOp.name.trim()) return;
+        setLoading('add-op');
+        try {
+            await api.post('/ptw_config/create', { type: 'operation', name: newOp.name.trim(), risk: newOp.risk.trim() });
+            setNewOp({ name: '', risk: '' });
+            refetch();
+            setToast({ type: 'success', message: t('common.success', 'Success') });
+        } catch {
+            setToast({ type: 'error', message: t('settings.reportOptions.createFailed', 'Failed to create') });
+        } finally {
+            setLoading(null);
+        }
+    };
+
+    const handleAddMeasure = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newMeasure.trim()) return;
+        setLoading('add-measure');
+        try {
+            await api.post('/ptw_config/create', { type: 'measure', name: newMeasure.trim() });
+            setNewMeasure('');
+            refetch();
+            setToast({ type: 'success', message: t('common.success', 'Success') });
+        } catch {
+            setToast({ type: 'error', message: t('settings.reportOptions.createFailed', 'Failed to create') });
+        } finally {
+            setLoading(null);
+        }
+    };
+
+    const handleToggle = async (type: 'operation' | 'measure', id: number, currentStatus: number) => {
+        setLoading(`toggle-${type}-${id}`);
+        try {
+            await api.post('/ptw_config/toggle', { type, id, status: currentStatus === 1 ? 0 : 1 });
+            refetch();
+        } catch {
+            setToast({ type: 'error', message: t('settings.reportOptions.toggleFailed', 'Failed to update status') });
+        } finally {
+            setLoading(null);
+        }
+    };
+
+    return (
+        <>
+            <ToastNotif toast={toast} onDismiss={() => setToast(null)} />
+            <div className="space-y-8">
+                {/* Add Operation Type */}
+                <div className="bg-white rounded-3xl border border-gray-100 p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                        <PlusCircle size={16} className="text-indigo-600" />
+                        <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider">
+                           Add PTW Operation Type
+                        </h3>
+                    </div>
+                    <form onSubmit={handleAddOp} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <input
+                            type="text"
+                            value={newOp.name}
+                            onChange={e => setNewOp({ ...newOp, name: e.target.value })}
+                            placeholder="Operation Type"
+                            className="px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-600 font-semibold text-gray-700 outline-none transition-all text-sm"
+                            required
+                        />
+                        <input
+                            type="text"
+                            value={newOp.risk}
+                            onChange={e => setNewOp({ ...newOp, risk: e.target.value })}
+                            placeholder="Risk Assessment"
+                            className="px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-600 font-semibold text-gray-700 outline-none transition-all text-sm"
+                            required
+                        />
+                        <button type="submit" disabled={loading === 'add-op'}
+                            className="flex items-center justify-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-lg shadow-indigo-100">
+                            {loading === 'add-op' ? <RefreshCw size={16} className="animate-spin" /> : <Plus size={16} />}
+                            Add
+                        </button>
+                    </form>
+                </div>
+
+                {/* Operation Types List */}
+                <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+                    <div className="p-6 border-b border-gray-50 bg-gray-50/30">
+                        <h4 className="font-black text-gray-900 text-sm uppercase tracking-tight">PTW Operation Types</h4>
+                    </div>
+                    <div className="divide-y divide-gray-50">
+                        {operationTypes.map(op => (
+                            <div key={op.id} className="flex items-center justify-between p-4 hover:bg-gray-50/50 transition-colors">
+                                <div className="flex flex-col gap-1 max-w-[70%]">
+                                    <span className={`text-sm font-bold ${op.is_active === 1 ? 'text-gray-900' : 'text-gray-400 line-through'}`}>{op.operation_name}</span>
+                                    <span className="text-[10px] text-gray-500 font-medium italic">{op.risk_assessment}</span>
+                                </div>
+                                <button
+                                    onClick={() => handleToggle('operation', op.id, op.is_active)}
+                                    disabled={loading === `toggle-operation-${op.id}`}
+                                    className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                                        op.is_active === 1 ? 'bg-red-50 text-red-500 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                    }`}
+                                >
+                                    {loading === `toggle-operation-${op.id}` ? <RefreshCw size={14} className="animate-spin" /> : op.is_active === 1 ? "Deactivate" : "Activate"}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Safety Measures Section */}
+                <div className="grid grid-cols-1 gap-8">
+                    <div className="bg-white rounded-3xl border border-gray-100 p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <PlusCircle size={16} className="text-emerald-600" />
+                            <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider">
+                                Add Safety Measure
+                            </h3>
+                        </div>
+                        <form onSubmit={handleAddMeasure} className="flex gap-3">
+                            <input
+                                type="text"
+                                value={newMeasure}
+                                onChange={e => setNewMeasure(e.target.value)}
+                                placeholder="Enter safety measure text..."
+                                className="flex-1 px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-600 font-semibold text-gray-700 outline-none transition-all text-sm"
+                                required
+                            />
+                            <button type="submit" disabled={loading === 'add-measure'}
+                                className="flex items-center gap-2 px-8 py-3 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-emerald-100">
+                                {loading === 'add-measure' ? <RefreshCw size={16} className="animate-spin" /> : <Plus size={16} />}
+                                Add
+                            </button>
+                        </form>
+                    </div>
+
+                    <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+                        <h4 className="font-black text-gray-900 text-sm uppercase tracking-tight mb-4">Safety Measures (Checkboxes)</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {safetyMeasures.map(sm => (
+                                <div key={sm.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <span className={`text-[11px] font-bold ${sm.is_active === 1 ? 'text-gray-700' : 'text-gray-400 line-through'}`}>{sm.measure_name}</span>
+                                    <button
+                                        onClick={() => handleToggle('measure', sm.id, sm.is_active)}
+                                        disabled={loading === `toggle-measure-${sm.id}`}
+                                        className={`p-1.5 rounded-lg transition-colors ${sm.is_active === 1 ? 'text-red-400 hover:bg-red-50' : 'text-emerald-500 hover:bg-emerald-50'}`}
+                                    >
+                                        {loading === `toggle-measure-${sm.id}` ? <RefreshCw size={12} className="animate-spin" /> : <Power size={12} />}
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+};
+
 // ─── Main Settings Page ───────────────────────────────────────────────────────
 const SettingsPage: React.FC = () => {
     const { t } = useTranslation();
-    const [activeTab, setActiveTab] = useState<'add-user' | 'projects'>('add-user');
+    const [activeTab, setActiveTab] = useState<'add-user' | 'projects' | 'report-options' | 'ptw-options'>('add-user');
 
     const tabs = [
-        { key: 'add-user' as const, label: t('settings.addUser', 'Add User'), icon: UserPlus },
-        { key: 'projects' as const, label: t('settings.projects', 'Projects'), icon: FolderOpen },
+        { key: 'add-user' as const, label: t('settings.tabs.users', 'Add User'), icon: UserPlus },
+        { key: 'projects' as const, label: t('settings.tabs.projects', 'Projects'), icon: FolderOpen },
+        { key: 'report-options' as const, label: t('settings.tabs.reportOptions', 'Report Options'), icon: ListTree },
+        { key: 'ptw-options' as const, label: t('settings.tabs.ptwOptions', 'PTW Options'), icon: ClipboardCheck },
     ];
 
     return (
@@ -512,6 +836,8 @@ const SettingsPage: React.FC = () => {
             <div className="animate-in fade-in duration-300" key={activeTab}>
                 {activeTab === 'add-user' && <AddUserTab />}
                 {activeTab === 'projects' && <ProjectsTab />}
+                {activeTab === 'report-options' && <ReportOptionsTab />}
+                {activeTab === 'ptw-options' && <PTWOptionsTab />}
             </div>
         </div>
     );

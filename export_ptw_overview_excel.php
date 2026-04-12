@@ -36,14 +36,51 @@ echo '<tr style="font-weight:bold; background-color:#f0f0f0;">
         <td>موقع العمل (Location)</td>
         <td>تاريخ التصريح (Date)</td>
         <td>نوع العملية (Operation)</td>
+        <td>وصف العمل (Work Description)</td>
         <td>احتياطات السلامة (MEASURES)</td>
         <td>مدير السلامة (Safety Manager)</td>
         <td>الحالة (Status)</td>
       </tr>';
 
+// Build filter conditions
+$filterConditions = [];
+
+// The frontend passes filters as a query string in the 'filters' parameter
+if (isset($_GET['filters'])) {
+    parse_str($_GET['filters'], $searchFilters);
+} else {
+    $searchFilters = $_GET; // Fallback
+}
+
+if (!empty($searchFilters['search'])) {
+    $s = $conn->real_escape_string($searchFilters['search']);
+    $filterConditions[] = "(p.permit_number LIKE '%$s%' OR p.work_location LIKE '%$s%' OR p.work_description LIKE '%$s%')";
+}
+if (!empty($searchFilters['project'])) {
+    $filterConditions[] = "p.project = " . intval($searchFilters['project']);
+}
+if (!empty($searchFilters['department'])) {
+    $filterConditions[] = "p.department = " . intval($searchFilters['department']);
+}
+if (!empty($searchFilters['status'])) {
+    $filterConditions[] = "p.ptw_status = " . intval($searchFilters['status']);
+}
+if (!empty($searchFilters['type'])) {
+    $filterConditions[] = "p.operation_type = '" . $conn->real_escape_string($searchFilters['type']) . "'";
+}
+if (!empty($searchFilters['startDate'])) {
+    $filterConditions[] = "p.permit_date >= '" . $conn->real_escape_string($searchFilters['startDate']) . "'";
+}
+if (!empty($searchFilters['endDate'])) {
+    $filterConditions[] = "p.permit_date <= '" . $conn->real_escape_string($searchFilters['endDate']) . "'";
+}
+
+$whereClause = count($filterConditions) > 0 ? 'WHERE ' . implode(' AND ', $filterConditions) : '';
+
 $sql = "SELECT p.*, d.department_name
         FROM PTW p
         LEFT JOIN department d ON p.department = d.id
+        $whereClause
         ORDER BY p.permit_date DESC";
         
 $result = $conn->query($sql);
@@ -71,6 +108,7 @@ while ($row = $result->fetch_assoc()) {
     echo '<td>' . htmlspecialchars($row['work_location'] ?? '—') . '</td>';
     echo '<td>' . htmlspecialchars($row['permit_date'] ?? '—') . '</td>';
     echo '<td>' . htmlspecialchars($row['operation_type'] ?? '—') . '</td>';
+    echo '<td>' . htmlspecialchars($row['work_description'] ?? '—') . '</td>';
     echo '<td>' . htmlspecialchars($row['safety_measures'] ?? '—') . '</td>';
     echo '<td>' . htmlspecialchars($row['safety_manager'] ?? '—') . '</td>';
     echo '<td>' . htmlspecialchars($statusText) . '</td>';
