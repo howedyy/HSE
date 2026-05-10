@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../header.php';
 
 // Check for admin permission
-$user_role = (int)($_SESSION['user_role'] ?? 0);
+$user_role = (int)($_SESSION['user_type'] ?? 0);
 if ($user_role !== 1) {
     http_response_code(403);
     echo json_encode(['message' => 'Unauthorized']);

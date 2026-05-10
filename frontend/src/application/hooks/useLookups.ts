@@ -21,29 +21,29 @@ export interface ObservationType {
 }
 
 export const useLookups = () => {
-    const { data, isLoading } = useQuery<LookupData>({
+    const { data, isPending: isLoading } = useQuery<LookupData>({
         queryKey: ['lookups'],
         queryFn: () => api.get('/lookup/options'),
         staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     });
 
     return {
-        projects: data?.projects ?? [],
-        departments: data?.departments ?? [],
-        users: data?.users ?? [],
+        projects: (data?.projects ?? []) as { id: string; project_name: string }[],
+        departments: (data?.departments ?? []) as { id: string; department_name: string }[],
+        users: (data?.users ?? []) as { id: string; username: string }[],
         isLoading,
     };
 };
 
 export const useReportOptions = () => {
-    const { data, isLoading, refetch } = useQuery<{ data: ObservationType[] }>({
+    const { data, isPending: isLoading, refetch } = useQuery<{ data: ObservationType[] }>({
         queryKey: ['report_options'],
         queryFn: () => api.get('/report_options/list'),
         staleTime: 5 * 60 * 1000,
     });
 
     return {
-        observationTypes: data?.data ?? [],
+        observationTypes: (data?.data ?? []) as ObservationType[],
         isLoading,
         refetch,
     };
@@ -63,15 +63,15 @@ export interface PTWSafetyMeasure {
 }
 
 export const usePTWOptions = () => {
-    const { data, isLoading, refetch } = useQuery<{ operation_types: PTWOperationType[], safety_measures: PTWSafetyMeasure[] }>({
+    const { data, isPending: isLoading, refetch } = useQuery<{ operation_types: PTWOperationType[], safety_measures: PTWSafetyMeasure[] }>({
         queryKey: ['ptw_options'],
         queryFn: () => api.get('/ptw_config/list'),
         staleTime: 5 * 60 * 1000,
     });
 
     return {
-        operationTypes: data?.operation_types ?? [],
-        safetyMeasures: data?.safety_measures ?? [],
+        operationTypes: (data?.operation_types ?? []) as PTWOperationType[],
+        safetyMeasures: (data?.safety_measures ?? []) as PTWSafetyMeasure[],
         isLoading,
         refetch,
     };
