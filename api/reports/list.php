@@ -37,7 +37,7 @@ $total = $stmt->get_result()->fetch_assoc()['total'];
 $stmt->close();
 
 // Fetch
-$sql = "SELECT dr.id, dr.date, pr.project_name, dp.department_name, dr.work_type, dr.risk,
+$sql = "SELECT dr.id, dr.date, pr.project_name, dp.department_name, pr.email as project_email, dp.email as department_email, pd.dep_mail as project_department_email, dr.work_type, dr.risk,
         dr.observation_description, dr.description, dr.observation, dr.operation_corrective,
         dr.report_status, dr.closed_at, dr.image_upload, dr.closure_notes, dr.closure_image,
         dr.email_sent, dr.user_id,
@@ -46,6 +46,7 @@ $sql = "SELECT dr.id, dr.date, pr.project_name, dp.department_name, dr.work_type
         FROM daily_report dr
         LEFT JOIN project pr ON dr.project = pr.id
         LEFT JOIN department dp ON dr.department = dp.id
+        LEFT JOIN project_department pd ON dr.project = pd.project_id AND dr.department = pd.department_id
         LEFT JOIN users u ON dr.user_id = u.id
         LEFT JOIN users u2 ON dr.closed_by = u2.id
         $where ORDER BY dr.date DESC LIMIT $limit OFFSET $offset";

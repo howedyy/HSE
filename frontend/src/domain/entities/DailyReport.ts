@@ -3,6 +3,9 @@ export interface DailyReport {
     date: string;
     project_name: string;
     department_name: string;
+    project_email?: string;
+    department_email?: string;
+    project_department_email?: string;
     work_type: string;
     risk: string;
     observation_description: string;

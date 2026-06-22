@@ -70,10 +70,12 @@ $query = "
         dr.id, dr.date, dr.risk, dr.observation_description, dr.description, dr.closed_at,
         pr.project_name, pr.email as project_email,
         d.department_name, d.email as department_email,
+        pd.dep_mail as project_department_email,
         u.username as created_by
     FROM daily_report dr
     LEFT JOIN project pr ON dr.project = pr.id
     LEFT JOIN department d ON dr.department = d.id
+    LEFT JOIN project_department pd ON dr.project = pd.project_id AND dr.department = pd.department_id
     LEFT JOIN users u ON dr.user_id = u.id
     WHERE dr.id = ?
 ";
@@ -149,8 +151,13 @@ try {
     $mail->setFrom('noreply@edaraproperty.net', 'HSE Report System');
     
     $recipientsAdded = false;
+    if (!empty($report['project_department_email'])) {
+        $mail->addAddress($report['project_department_email']);
+        $recipientsAdded = true;
+    }
+    
     if (!empty($report['project_email'])) {
-        $mail->addAddress($report['project_email']);
+        $mail->addCC($report['project_email']);
         $recipientsAdded = true;
     }
     if (!empty($report['department_email'])) {

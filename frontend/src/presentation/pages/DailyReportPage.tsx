@@ -42,6 +42,7 @@ const DailyReportPage: React.FC = () => {
     const [isSubmittingClosure, setIsSubmittingClosure] = useState(false);
     const [isCompressing, setIsCompressing] = useState(false);
     const [isEmailing, setIsEmailing] = useState<number | null>(null);
+    const [emailingReport, setEmailingReport] = useState<any>(null);
     const [comments, setComments] = useState<any[]>([]);
     const [newComment, setNewComment] = useState('');
     const [commentImages, setCommentImages] = useState<File[]>([]);
@@ -82,8 +83,6 @@ const DailyReportPage: React.FC = () => {
     };
 
     const handleSendEmail = async (id: number) => {
-        if (!window.confirm(t('dailyReport.confirm.email'))) return;
-
         setIsEmailing(id);
         try {
             const response: any = await api.post('/reports/send_email', { report_id: id });
@@ -386,7 +385,7 @@ const DailyReportPage: React.FC = () => {
 
                                                 {canSendEmail && (
                                                     <button
-                                                        onClick={() => handleSendEmail(r.id)}
+                                                        onClick={() => setEmailingReport(r)}
                                                         disabled={r.email_sent === 1 || isEmailing === r.id}
                                                         className={`p-2 rounded-xl transition-colors ${r.email_sent === 1
                                                             ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
@@ -790,6 +789,103 @@ const DailyReportPage: React.FC = () => {
                                 {isSubmittingClosure ? <Loader2 size={18} className="animate-spin" /> : <><CheckCircle size={18} /> {t('dailyReport.resolution.submit')}</>}
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+            {/* Email Confirmation Modal */}
+            {emailingReport && (
+                <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-[60] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="bg-gradient-to-r from-indigo-600 to-blue-700 p-8 text-white relative flex-shrink-0">
+                            <button onClick={() => setEmailingReport(null)} className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors text-white">
+                                <X size={20} />
+                            </button>
+                            <div className="flex items-start gap-4">
+                                <div className="p-3 bg-white/10 rounded-2xl">
+                                    <Mail size={28} />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-bold">{t('dailyReport.email.title', 'Send Report via Email')}</h2>
+                                    <p className="text-indigo-100/80 text-sm mt-1">{t('dailyReport.email.subtitle', 'Confirm sending report #')}{emailingReport.id}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-8 space-y-6 bg-white overflow-y-auto custom-scrollbar">
+                            <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100 space-y-3">
+                                <div className="text-xs text-gray-600 space-y-2">
+                                    <div className="bg-white p-3 rounded-lg border border-gray-100 space-y-2">
+                                        <div className="flex items-start gap-2">
+                                            <span className="font-bold text-gray-400 uppercase tracking-widest text-[10px] w-12 pt-0.5">To:</span>
+                                            <span className="font-medium text-gray-800 break-all">{emailingReport.project_department_email || <span className="text-gray-400 italic">No specific department email</span>}</span>
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                            <span className="font-bold text-gray-400 uppercase tracking-widest text-[10px] w-12 pt-0.5">CC:</span>
+                                            <div className="flex flex-col gap-1 font-medium text-gray-800 break-all">
+                                                {emailingReport.project_email && <span>{emailingReport.project_email}</span>}
+                                                {emailingReport.department_email && <span>{emailingReport.department_email}</span>}
+                                                <span>Ahmed.ali@edaraproperty.net</span>
+                                                <span>hse.manager@edaraproperty.net</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-2 pt-2 border-t border-gray-100">
+                                            <span className="font-bold text-gray-400 uppercase tracking-widest text-[10px] w-12 pt-0.5">Subject:</span>
+                                            <span className="font-medium text-gray-800 break-all">HSE Observation Report - {emailingReport.project_name} (ID: #{emailingReport.id})</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="mt-4">
+                                        <span className="font-bold text-gray-400 uppercase tracking-widest text-[10px] block mb-2">Message Body Preview:</span>
+                                        <div className="bg-white border border-gray-200 rounded-xl p-4 overflow-x-auto shadow-sm">
+                                            <div style={{ fontFamily: 'Arial, sans-serif', minWidth: '400px', margin: '0 auto', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
+                                                <div style={{ backgroundColor: '#2196F3', color: 'white', padding: '15px', borderRadius: '5px 5px 0 0', textAlign: 'center' }}>
+                                                    <h2 style={{ margin: 0, fontSize: '16px' }}>New HSE Observation Report</h2>
+                                                </div>
+                                                <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '0 0 5px 5px' }}>
+                                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                                                        <tbody>
+                                                            <tr><td style={{ padding: '8px 0', borderBottom: '1px solid #eee', width: '100px' }}><b>ID:</b></td><td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>#{emailingReport.id}</td></tr>
+                                                            <tr><td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}><b>Project:</b></td><td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{emailingReport.project_name}</td></tr>
+                                                            <tr><td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}><b>Department:</b></td><td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{emailingReport.department_name}</td></tr>
+                                                            <tr><td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}><b>Risk:</b></td><td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>
+                                                                <span style={{ color: emailingReport.risk === 'عالية' || emailingReport.risk === 'High' ? '#d9534f' : emailingReport.risk === 'متوسطه' || emailingReport.risk === 'Medium' ? '#f0ad4e' : '#5cb85c', fontWeight: 'bold' }}>
+                                                                    {emailingReport.risk === 'عالية' || emailingReport.risk === 'High' ? '🔴 High Risk' : emailingReport.risk === 'متوسطه' || emailingReport.risk === 'Medium' ? '🟡 Medium Risk' : '🟢 Low Risk'}
+                                                                </span>
+                                                            </td></tr>
+                                                            <tr><td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}><b>Observation:</b></td><td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{emailingReport.observation_description}</td></tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <div style={{ marginTop: '20px', padding: '15px', borderLeft: '4px solid #2196F3', background: '#e3f2fd', fontSize: '12px' }}>
+                                                        <p style={{ margin: '0 0 10px 0' }}><b>Description:</b></p>
+                                                        <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{emailingReport.description}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    onClick={() => setEmailingReport(null)}
+                                    className="flex-1 py-3.5 px-4 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm"
+                                >
+                                    {t('common.cancel', 'Cancel')}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const id = emailingReport.id;
+                                        setEmailingReport(null);
+                                        handleSendEmail(id);
+                                    }}
+                                    disabled={isEmailing === emailingReport.id}
+                                    className="flex-1 py-3.5 px-4 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 flex justify-center items-center gap-2"
+                                >
+                                    {isEmailing === emailingReport.id ? <Loader2 size={18} className="animate-spin" /> : <><Send size={18} /> {t('common.send', 'Send')}</>}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
