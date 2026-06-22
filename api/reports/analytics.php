@@ -146,11 +146,12 @@ $overdueConditions = $whereConditions;
 $overdueConditions[] = $overdueCondition;
 $overdueWhere = "WHERE " . implode(" AND ", $overdueConditions);
 
-$overdueSql = "SELECT dr.id, dr.date, dr.risk, dr.report_status, dr.closed_at, 
-                      pr.project_name, dp.department_name, u.username as created_by
+$overdueSql = "SELECT dr.id, dr.date, dr.risk, dr.report_status, dr.closed_at, dr.observation_description, dr.description,
+                      pr.project_name, pr.email as project_email, dp.department_name, dp.email as department_email, pd.dep_mail as project_department_email, u.username as created_by
                FROM daily_report dr
                LEFT JOIN project pr ON dr.project = pr.id
                LEFT JOIN department dp ON dr.department = dp.id
+               LEFT JOIN project_department pd ON dr.project = pd.project_id AND dr.department = pd.department_id
                LEFT JOIN users u ON dr.user_id = u.id
                $overdueWhere
                ORDER BY dr.date DESC";
