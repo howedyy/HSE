@@ -54,6 +54,8 @@ if (strpos($contentType, 'application/json') !== false) {
 }
 
 $report_id = $input['report_id'] ?? null;
+$is_escalation = !empty($input['is_escalation']) && filter_var($input['is_escalation'], FILTER_VALIDATE_BOOLEAN);
+
 if (!$report_id) {
     echo json_encode(['success' => false, 'message' => 'Report ID is required']);
     exit;
@@ -107,11 +109,24 @@ switch ($report['risk']) {
 
 $status = $report['closed_at'] ? 'Closed' : 'Open';
 
-$emailSubject = "HSE Observation Report - " . $report['project_name'] . " (ID: #" . $report_id . ")";
+if ($is_escalation) {
+    $emailSubject = "⚠️ URGENT ESCALATION: Overdue HSE Observation - " . $report['project_name'] . " (ID: #" . $report_id . ")";
+    $headerColor = "#dc2626"; // red
+    $headerTitle = "ESCALATED: Overdue HSE Observation Report";
+    $borderColor = "#dc2626";
+    $bgColor = "#fef2f2";
+} else {
+    $emailSubject = "HSE Observation Report - " . $report['project_name'] . " (ID: #" . $report_id . ")";
+    $headerColor = "#2196F3"; // blue
+    $headerTitle = "New HSE Observation Report";
+    $borderColor = "#2196F3";
+    $bgColor = "#e3f2fd";
+}
+
 $emailBody = "
 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;'>
-    <div style='background-color: #2196F3; color: white; padding: 15px; border-radius: 5px 5px 0 0; text-align: center;'>
-        <h2 style='margin: 0;'>New HSE Observation Report</h2>
+    <div style='background-color: $headerColor; color: white; padding: 15px; border-radius: 5px 5px 0 0; text-align: center;'>
+        <h2 style='margin: 0;'>$headerTitle</h2>
     </div>
     <div style='background-color: white; padding: 20px; border-radius: 0 0 5px 5px;'>
         <table style='width: 100%; border-collapse: collapse;'>
@@ -121,7 +136,7 @@ $emailBody = "
             <tr><td style='padding: 8px;'><b>Risk:</b></td><td><span style='color:$risk_color'>$risk_badge</span></td></tr>
             <tr><td style='padding: 8px;'><b>Observation:</b></td><td>" . htmlspecialchars($report['observation_description']) . "</td></tr>
         </table>
-        <div style='margin-top: 20px; padding: 15px; border-left: 4px solid #2196F3; background:#e3f2fd;'>
+        <div style='margin-top: 20px; padding: 15px; border-left: 4px solid $borderColor; background:$bgColor;'>
             <p><b>Description:</b></p>
             <p>" . nl2br(htmlspecialchars($report['description'])) . "</p>
         </div>
@@ -151,24 +166,44 @@ try {
     $mail->setFrom('noreply@edaraproperty.net', 'HSE Report System');
     
     $recipientsAdded = false;
-    if (!empty($report['project_department_email'])) {
-        $mail->addAddress($report['project_department_email']);
-        $recipientsAdded = true;
+    
+    // Helper to parse multiple emails
+    $parseEmails = function($str) {
+        if (empty($str)) return [];
+        $str = str_replace(';', ',', $str);
+        $emails = explode(',', $str);
+        $valid = [];
+        foreach ($emails as $e) {
+            $e = trim($e);
+            if (!empty($e) && filter_var($e, FILTER_VALIDATE_EMAIL)) {
+                $valid[] = $e;
+            }
+        }
+        return $valid;
+    };
+
+    $toEmails = $parseEmails($report['project_department_email'] ?? '');
+    foreach ($toEmails as $email) {
+        try { $mail->addAddress($email); $recipientsAdded = true; } catch (Exception $e) {}
     }
     
-    if (!empty($report['project_email'])) {
-        $mail->addCC($report['project_email']);
-        $recipientsAdded = true;
+    // If no valid To address, add a default so it doesn't fail if there are only CCs
+    if (!$recipientsAdded) {
+        try { $mail->addAddress('noreply@edaraproperty.net', 'Undisclosed Recipients'); } catch (Exception $e) {}
     }
-    if (!empty($report['department_email'])) {
-        $mail->addCC($report['department_email']);
-        $recipientsAdded = true;
+    
+    $ccEmails = array_merge(
+        $parseEmails($report['project_email'] ?? ''),
+        $parseEmails($report['department_email'] ?? '')
+    );
+    foreach ($ccEmails as $email) {
+        try { $mail->addCC($email); } catch (Exception $e) {}
     }
     
     // Hardcoded CCs
-    $mail->addCC('Ahmed.ali@edaraproperty.net');
-    $mail->addCC('hse.manager@edaraproperty.net');
-    $recipientsAdded = true; // Since we have hardcoded ones
+    try { $mail->addCC('Ahmed.ali@edaraproperty.net'); } catch (Exception $e) {}
+    try { $mail->addCC('hse.manager@edaraproperty.net'); } catch (Exception $e) {}
+    $recipientsAdded = true;
     
     $mail->isHTML(true);
     $mail->CharSet = 'UTF-8';
@@ -176,15 +211,31 @@ try {
     $mail->Body    = $emailBody;
 
     error_log("Email Dispatch: Attempting to send...");
-    $mail->send();
-    error_log("Email Dispatch: Sent successfully.");
+    $partialSuccess = false;
+    $errorMessage = "";
+    try {
+        $mail->send();
+        error_log("Email Dispatch: Sent successfully.");
+    } catch (\Exception $e) {
+        if (strpos($e->getMessage(), 'The following recipients failed') !== false) {
+            $partialSuccess = true;
+            $errorMessage = $e->getMessage();
+            error_log("Email Dispatch: Partial success. " . $errorMessage);
+        } else {
+            throw $e;
+        }
+    }
     
     $updateStmt = $conn->prepare("UPDATE daily_report SET email_sent = 1, email_sent_at = NOW() WHERE id = ?");
     $updateStmt->bind_param("i", $report_id);
     $updateStmt->execute();
     $updateStmt->close();
 
-    echo json_encode(['success' => true, 'message' => 'Email sent successfully']);
+    if ($partialSuccess) {
+        echo json_encode(['success' => true, 'message' => 'Email sent, but some invalid recipients were skipped.']);
+    } else {
+        echo json_encode(['success' => true, 'message' => 'Email sent successfully']);
+    }
 } catch (\Exception $e) {
     error_log("Email Dispatch Fatal Error: " . $e->getMessage());
     http_response_code(500);
