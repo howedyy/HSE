@@ -41,7 +41,7 @@ const MainLayout: React.FC<Props> = ({ children }) => {
             )}
 
             {/* Sidebar */}
-            <aside className={`fixed inset-y-0 left-0 rtl:left-auto rtl:right-0 z-50 w-64 bg-white dark:bg-slate-900 border-r rtl:border-r-0 rtl:border-l border-gray-200 dark:border-slate-800 flex flex-col shrink-0 transition-transform duration-300 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full'} md:relative md:translate-x-0`}>
+            <aside className={`fixed inset-y-0 left-0 rtl:left-auto rtl:right-0 z-50 w-64 bg-white dark:bg-slate-900 border-r rtl:border-r-0 rtl:border-l border-gray-200 dark:border-slate-800 flex flex-col shrink-0 transition-transform duration-300 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full'} md:relative md:translate-x-0 rtl:md:translate-x-0`}>
                 <div className="p-6 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center">
                     <div className="flex items-center gap-2">
                         <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center">
