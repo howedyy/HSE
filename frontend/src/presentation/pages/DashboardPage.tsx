@@ -10,12 +10,12 @@ import {
 
 // --- Stat Card ---
 const StatCard = ({ icon, value, label, color }: { icon: React.ReactNode; value: number; label: string; color: string }) => (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg transition-shadow group">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 p-6 hover:shadow-lg transition-shadow group">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${color}`}>
             {icon}
         </div>
-        <div className="text-3xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{value}</div>
-        <div className="text-sm text-gray-500 mt-1">{label}</div>
+        <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-700 transition-colors">{value}</div>
+        <div className="text-sm text-gray-500 dark:text-slate-400 mt-1">{label}</div>
     </div>
 );
 
@@ -26,7 +26,7 @@ const RingChart = ({ percentage, color, label, detail }: { percentage: number; c
     const offset = circumference - (percentage / 100) * circumference;
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col items-center">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 p-6 flex flex-col items-center">
             <div className="relative w-32 h-32">
                 <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
                     <circle cx="60" cy="60" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="10" />
@@ -38,10 +38,10 @@ const RingChart = ({ percentage, color, label, detail }: { percentage: number; c
                     />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-gray-900">{percentage}%</span>
+                    <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{percentage}%</span>
                 </div>
             </div>
-            <p className="text-sm font-semibold text-gray-700 mt-4">{label}</p>
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-4">{label}</p>
             <p className="text-xs text-gray-400 mt-1 text-center">{detail}</p>
         </div>
     );
@@ -60,10 +60,10 @@ const IncidentRow = ({ description, project, date, risk, status, t, i18n }: {
         : 'bg-red-50 text-red-700 border-red-200';
 
     return (
-        <div className="flex items-center gap-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 rounded-lg px-2 transition-colors">
+        <div className="flex items-center gap-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 dark:bg-slate-950/50/50 rounded-lg px-2 transition-colors">
             <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${dotColor}`} />
             <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800 truncate">{description || t('dashboard.incidents.noDescription', 'No description')}</p>
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{description || t('dashboard.incidents.noDescription', 'No description')}</p>
                 <div className="flex items-center gap-3 text-xs text-gray-400 mt-0.5">
                     <span className="flex items-center gap-1"><Building size={12} /> {project}</span>
                     <span>{new Date(date).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'ar-EG')}</span>
@@ -89,7 +89,7 @@ const DashboardPage: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 opacity-50 pointer-events-none">
                     {[...Array(4)].map((_, i) => (
-                        <div key={i} className="h-32 bg-gray-50 rounded-2xl animate-pulse" />
+                        <div key={i} className="h-32 bg-gray-50 dark:bg-slate-950/50 rounded-2xl animate-pulse" />
                     ))}
                 </div>
             </div>
@@ -99,13 +99,13 @@ const DashboardPage: React.FC = () => {
     const { stats, bestPractices, highRisk, taskCompletion, monthlyTrend, recentIncidents } = dashboard;
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
+        <div className="max-w-7xl mx-auto space-y-4 md:space-y-8 animate-in fade-in duration-700">
             {/* Welcome Header */}
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {t('dashboard.welcome', { name: user?.username ?? 'User' })}
                 </h1>
-                <p className="text-gray-500 text-sm mt-1">{t('dashboard.subtitle')}</p>
+                <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">{t('dashboard.subtitle')}</p>
             </div>
 
             {/* Stats Grid */}
@@ -139,11 +139,11 @@ const DashboardPage: React.FC = () => {
             </div>
 
             {/* Activity Trend Chart (simple bar chart with CSS) */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-2">
                         <TrendingUp size={18} className="text-blue-600" />
-                        <h3 className="font-semibold text-gray-800">{t('dashboard.trend.title')}</h3>
+                        <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t('dashboard.trend.title')}</h3>
                     </div>
                 </div>
                 <div className="flex items-end gap-3 h-40">
@@ -152,7 +152,7 @@ const DashboardPage: React.FC = () => {
                         const heightPct = (m.count / maxCount) * 100;
                         return (
                             <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                                <span className="text-xs font-medium text-gray-600">{m.count}</span>
+                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{m.count}</span>
                                 <div
                                     className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all duration-700"
                                     style={{ height: `${Math.max(heightPct, 4)}%` }}
@@ -167,11 +167,11 @@ const DashboardPage: React.FC = () => {
             </div>
 
             {/* Recent Incidents */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 p-6">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                         <TriangleAlert size={18} className="text-red-500" />
-                        <h3 className="font-semibold text-gray-800">{t('dashboard.incidents.title')}</h3>
+                        <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t('dashboard.incidents.title')}</h3>
                     </div>
                     <a href="/reports" className="text-xs text-blue-600 flex items-center gap-1 hover:underline">
                         {t('dashboard.incidents.viewAll')} <ChevronRight size={14} className="rtl:rotate-180" />

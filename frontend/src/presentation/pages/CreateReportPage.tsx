@@ -6,8 +6,8 @@ import api from '../../infrastructure/api/client';
 import { FileText, ArrowLeft, CheckCircle, Loader2, Image as ImageIcon, X, AlertCircle } from 'lucide-react';
 import { compressImage } from '../../shared/utils/imageCompression';
 
-const selectClass = "w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
-const labelClass = "block text-sm font-semibold text-gray-700 mb-1.5";
+const selectClass = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
+const labelClass = "block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5";
 
 const CreateReportPage: React.FC = () => {
     const navigate = useNavigate();
@@ -31,8 +31,8 @@ const CreateReportPage: React.FC = () => {
                 <div className="inline-flex p-4 rounded-full bg-red-50 text-red-400 mb-4">
                     <FileText size={32} />
                 </div>
-                <h2 className="text-xl font-bold text-gray-800">Access Denied</h2>
-                <p className="text-gray-500 mt-2">You do not have permission to submit daily reports.</p>
+                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">Access Denied</h2>
+                <p className="text-gray-500 dark:text-slate-400 mt-2">You do not have permission to submit daily reports.</p>
             </div>
         );
     }
@@ -89,20 +89,20 @@ const CreateReportPage: React.FC = () => {
                 <div className="inline-flex p-4 rounded-full bg-green-50 text-green-500 mb-4 animate-bounce">
                     <CheckCircle size={40} />
                 </div>
-                <h2 className="text-xl font-bold text-gray-800">Report Submitted!</h2>
-                <p className="text-gray-500 mt-2">Redirecting to reports list...</p>
+                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">Report Submitted!</h2>
+                <p className="text-gray-500 dark:text-slate-400 mt-2">Redirecting to reports list...</p>
             </div>
         );
     }
 
     return (
         <div className="max-w-2xl mx-auto">
-            <button onClick={() => navigate('/reports')} className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 mb-6 transition-colors">
+            <button onClick={() => navigate('/reports')} className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400 hover:text-blue-600 mb-6 transition-colors">
                 <ArrowLeft size={16} /> Back to Reports
             </button>
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-8">
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3 mb-8">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 p-8">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3 mb-8">
                     <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
                         <FileText size={20} className="text-blue-600" />
                     </div>
@@ -199,7 +199,7 @@ const CreateReportPage: React.FC = () => {
                         <label className={labelClass}>Observation Images (صور الملاحظة)</label>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             {images.map((img, idx) => (
-                                <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-gray-200">
+                                <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700">
                                     <img src={URL.createObjectURL(img)} alt="preview" className="w-full h-full object-cover" />
                                     <button
                                         type="button"
@@ -210,9 +210,9 @@ const CreateReportPage: React.FC = () => {
                                     </button>
                                 </div>
                             ))}
-                            <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all">
+                            <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-slate-700 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all">
                                 <ImageIcon size={24} className="text-gray-400" />
-                                <span className="text-[10px] font-medium text-gray-500 text-center px-2">
+                                <span className="text-[10px] font-medium text-gray-500 dark:text-slate-400 text-center px-2">
                                     {compressing ? 'Compressing...' : 'Add Images'}
                                 </span>
                                 <input

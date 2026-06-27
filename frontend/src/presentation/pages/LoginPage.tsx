@@ -47,7 +47,7 @@ const LoginPage: React.FC = () => {
                 transition={{ duration: 0.8, ease: "easeOut" }}
                 className="w-full max-w-md p-8 relative z-10"
             >
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-10 rounded-3xl shadow-2xl">
+                <div className="bg-white dark:bg-slate-900/5 backdrop-blur-xl border border-white/10 p-10 rounded-3xl shadow-2xl">
                     <div className="flex flex-col items-center mb-10">
                         <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-500/30">
                             <ShieldCheck size={32} className="text-white" />
@@ -71,14 +71,14 @@ const LoginPage: React.FC = () => {
                         <div className="space-y-2">
                             <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">{t('login.username')}</label>
                             <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-blue-500 transition-colors">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 dark:text-slate-400 group-focus-within:text-blue-500 transition-colors">
                                     <Mail size={18} />
                                 </div>
                                 <input
                                     type="text"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
-                                    className="block w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-sm"
+                                    className="block w-full pl-11 pr-4 py-3.5 bg-white dark:bg-slate-900/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-sm"
                                     placeholder="name@company.com"
                                     required
                                 />
@@ -91,14 +91,14 @@ const LoginPage: React.FC = () => {
                                 <a href="#" className="text-xs text-blue-500 hover:text-blue-400 transition-colors">{t('login.forgotPassword')}</a>
                             </div>
                             <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-blue-500 transition-colors">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 dark:text-slate-400 group-focus-within:text-blue-500 transition-colors">
                                     <Lock size={18} />
                                 </div>
                                 <input
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="block w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-sm"
+                                    className="block w-full pl-11 pr-4 py-3.5 bg-white dark:bg-slate-900/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-sm"
                                     placeholder="••••••••"
                                     required
                                 />
@@ -121,7 +121,7 @@ const LoginPage: React.FC = () => {
                         </button>
                     </form>
 
-                    <p className="mt-8 text-center text-xs text-gray-500">
+                    <p className="mt-8 text-center text-xs text-gray-500 dark:text-slate-400">
                         {t('login.footer1')} <br />
                         {t('login.footer2')}
                     </p>

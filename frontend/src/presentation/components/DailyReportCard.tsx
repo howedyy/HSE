@@ -21,7 +21,7 @@ export const DailyReportCard: React.FC<Props> = ({ report, className }) => {
     };
 
     return (
-        <div className={cn("p-4 rounded-xl border bg-white shadow-sm hover:shadow-md transition-shadow", className)}>
+        <div className={cn("p-4 rounded-xl border bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow", className)}>
             <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-2">
                     <span className={cn("px-2.5 py-0.5 rounded-full text-xs font-semibold border", riskColors[report.risk])}>
@@ -39,11 +39,11 @@ export const DailyReportCard: React.FC<Props> = ({ report, className }) => {
                 )}
             </div>
 
-            <h3 className="font-bold text-gray-900 mb-1">{report.observation}</h3>
-            <p className="text-sm text-gray-600 line-clamp-2 mb-3">{report.description}</p>
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-1">{report.observation}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">{report.description}</p>
 
             <div className="grid grid-cols-2 gap-2 mt-auto">
-                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400">
                     <MapPin size={12} />
                     {report.project}
                 </div>

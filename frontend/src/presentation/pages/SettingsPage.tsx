@@ -96,8 +96,8 @@ const AddUserTab: React.FC = () => {
         }
     };
 
-    const inputClass = "w-full pl-11 rtl:pl-4 rtl:pr-11 pr-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 font-semibold text-gray-700 outline-none transition-all";
-    const plainInputClass = "w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 font-semibold text-gray-700 outline-none transition-all cursor-pointer appearance-none";
+    const inputClass = "w-full pl-11 rtl:pl-4 rtl:pr-11 pr-4 py-3 bg-gray-50 dark:bg-slate-950/50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 font-semibold text-gray-700 dark:text-gray-300 outline-none transition-all";
+    const plainInputClass = "w-full px-4 py-3 bg-gray-50 dark:bg-slate-950/50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 font-semibold text-gray-700 dark:text-gray-300 outline-none transition-all cursor-pointer appearance-none";
 
     return (
         <>
@@ -105,10 +105,10 @@ const AddUserTab: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-8">
 
                 {/* Identity Section */}
-                <div className="bg-white rounded-3xl border border-gray-100 p-8 space-y-6">
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 p-4 md:p-8 space-y-4 md:space-y-6">
                     <div className="flex items-center gap-2 mb-2">
                         <Info size={16} className="text-blue-600" />
-                        <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider">
+                        <h3 className="text-sm font-black text-gray-900 dark:text-gray-100 uppercase tracking-wider">
                             {t('users.identityDetails', 'Identity Details')}
                         </h3>
                     </div>
@@ -183,25 +183,25 @@ const AddUserTab: React.FC = () => {
                     </div>
 
                     {/* Status Toggle */}
-                    <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                    <div className="flex items-center gap-4 bg-gray-50 dark:bg-slate-950/50 p-4 rounded-2xl border border-gray-100 dark:border-slate-800">
                         <div className="flex-1">
-                            <p className="text-xs font-black text-gray-900 uppercase tracking-tight">{t('users.activeStatus', 'Account Status')}</p>
+                            <p className="text-xs font-black text-gray-900 dark:text-gray-100 uppercase tracking-tight">{t('users.activeStatus', 'Account Status')}</p>
                             <p className="text-[10px] text-gray-400 font-bold">{t('users.activeStatusSub', 'Grant or revoke system access immediately.')}</p>
                         </div>
                         <button type="button"
                             onClick={() => setForm({ ...form, userStatus: form.userStatus === 1 ? 0 : 1 })}
                             className={`relative w-14 h-8 rounded-full transition-all duration-300 ring-4 ring-transparent focus:ring-blue-600/10 ${form.userStatus === 1 ? 'bg-emerald-500' : 'bg-gray-300'}`}>
-                            <div className={`absolute top-1 left-1 bg-white w-6 h-6 rounded-full shadow-md transition-transform duration-300 ${form.userStatus === 1 ? 'translate-x-6' : ''}`} />
+                            <div className={`absolute top-1 left-1 bg-white dark:bg-slate-900 w-6 h-6 rounded-full shadow-md transition-transform duration-300 ${form.userStatus === 1 ? 'translate-x-6' : ''}`} />
                         </button>
                     </div>
                 </div>
 
                 {/* Permissions Section */}
-                <div className="bg-white rounded-3xl border border-gray-100 p-8 space-y-6">
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 p-4 md:p-8 space-y-4 md:space-y-6">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Key size={16} className="text-blue-600" />
-                            <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider">{t('users.permissions', 'Permissions')}</h3>
+                            <h3 className="text-sm font-black text-gray-900 dark:text-gray-100 uppercase tracking-wider">{t('users.permissions', 'Permissions')}</h3>
                         </div>
                         <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-widest">
                             {t('users.activeRules', { count: selectedPermissions.length })}
@@ -210,12 +210,12 @@ const AddUserTab: React.FC = () => {
 
                     <div className="grid grid-cols-1 gap-4">
                         {Object.entries(groupedPermissions).map(([page, perms]: [string, any]) => (
-                            <div key={page} className="bg-gray-50/80 border border-gray-100 rounded-2xl p-5 space-y-3 hover:border-blue-200 transition-colors group">
+                            <div key={page} className="bg-gray-50 dark:bg-slate-950/50/80 border border-gray-100 dark:border-slate-800 rounded-2xl p-5 space-y-3 hover:border-blue-200 transition-colors group">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-white text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 rounded-xl flex items-center justify-center transition-colors border border-gray-100">
+                                    <div className="w-8 h-8 bg-white dark:bg-slate-900 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 rounded-xl flex items-center justify-center transition-colors border border-gray-100 dark:border-slate-800">
                                         <ChevronRight size={14} className="rtl:rotate-180" />
                                     </div>
-                                    <h4 className="text-xs font-black text-gray-700 uppercase tracking-widest">
+                                    <h4 className="text-xs font-black text-gray-700 dark:text-gray-300 uppercase tracking-widest">
                                         {t(`modules.${page.split('.')[0]}`, page.split('.')[0].replace(/_/g, ' '))} {t('common.module', 'Module')}
                                     </h4>
                                 </div>
@@ -225,16 +225,16 @@ const AddUserTab: React.FC = () => {
                                             className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all select-none ${
                                                 selectedPermissions.includes(p.value)
                                                     ? 'bg-blue-50 border border-blue-100'
-                                                    : 'bg-white border border-transparent hover:bg-gray-50'
+                                                    : 'bg-white dark:bg-slate-900 border border-transparent hover:bg-gray-50 dark:bg-slate-950/50'
                                             }`}>
                                             <div className="flex flex-col">
-                                                <span className={`text-[11px] font-bold ${selectedPermissions.includes(p.value) ? 'text-blue-700' : 'text-gray-600'}`}>
+                                                <span className={`text-[11px] font-bold ${selectedPermissions.includes(p.value) ? 'text-blue-700' : 'text-gray-600 dark:text-gray-400'}`}>
                                                     {p.description}
                                                 </span>
                                                 <span className="text-[9px] font-medium text-gray-400">{t('common.command', 'Command')}: {p.action}</span>
                                             </div>
                                             <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${
-                                                selectedPermissions.includes(p.value) ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-200 bg-white'
+                                                selectedPermissions.includes(p.value) ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900'
                                             }`}>
                                                 {selectedPermissions.includes(p.value) && <Check size={12} strokeWidth={4} />}
                                             </div>
@@ -330,10 +330,10 @@ const ProjectsTab: React.FC = () => {
 
             <div className="space-y-6">
                 {/* Add Project Card */}
-                <div className="bg-white rounded-3xl border border-gray-100 p-6">
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 p-6">
                     <div className="flex items-center gap-2 mb-4">
                         <Plus size={16} className="text-blue-600" />
-                        <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider">
+                        <h3 className="text-sm font-black text-gray-900 dark:text-gray-100 uppercase tracking-wider">
                             {t('settings.addProject', 'Add New Project')}
                         </h3>
                     </div>
@@ -344,13 +344,13 @@ const ProjectsTab: React.FC = () => {
                                 value={newName}
                                 onChange={e => setNewName(e.target.value)}
                                 placeholder={t('settings.projectNamePlaceholder', 'Enter project name...')}
-                                className="flex-[2] px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 font-semibold text-gray-700 outline-none transition-all text-sm"
+                                className="flex-[2] px-4 py-3 bg-gray-50 dark:bg-slate-950/50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 font-semibold text-gray-700 dark:text-gray-300 outline-none transition-all text-sm"
                                 required
                             />
                             <select
                                 value={newRegion}
                                 onChange={e => setNewRegion(Number(e.target.value))}
-                                className="flex-1 px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 font-semibold text-gray-700 outline-none transition-all text-sm cursor-pointer"
+                                className="flex-1 px-4 py-3 bg-gray-50 dark:bg-slate-950/50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 font-semibold text-gray-700 dark:text-gray-300 outline-none transition-all text-sm cursor-pointer"
                             >
                                 <option value={1}>{t('settings.regionWest', 'West Region')}</option>
                                 <option value={2}>{t('settings.regionEast', 'East Region')}</option>
@@ -362,7 +362,7 @@ const ProjectsTab: React.FC = () => {
                                 value={newEmail}
                                 onChange={e => setNewEmail(e.target.value)}
                                 placeholder={t('settings.projectEmailPlaceholder', 'Project email (optional)...')}
-                                className="flex-1 px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 font-semibold text-gray-700 outline-none transition-all text-sm"
+                                className="flex-1 px-4 py-3 bg-gray-50 dark:bg-slate-950/50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 font-semibold text-gray-700 dark:text-gray-300 outline-none transition-all text-sm"
                             />
                             <button type="submit" disabled={addingProject}
                                 className="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-100">
@@ -374,14 +374,14 @@ const ProjectsTab: React.FC = () => {
                 </div>
 
                 {/* Projects List */}
-                <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 overflow-hidden">
                     <div className="p-6 border-b border-gray-50 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
                                 <FolderOpen size={20} />
                             </div>
                             <div>
-                                <h3 className="font-black text-gray-900 text-sm">{t('settings.projectsTitle', 'All Projects')}</h3>
+                                <h3 className="font-black text-gray-900 dark:text-gray-100 text-sm">{t('settings.projectsTitle', 'All Projects')}</h3>
                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">
                                     {activeCount} {t('common.active', 'Active')} / {projects.length} {t('settings.total', 'Total')}
                                 </p>
@@ -394,11 +394,11 @@ const ProjectsTab: React.FC = () => {
 
                     {loadingList ? (
                         <div className="p-8 space-y-3">
-                            {[...Array(5)].map((_, i) => <div key={i} className="h-16 bg-gray-50 rounded-2xl animate-pulse" />)}
+                            {[...Array(5)].map((_, i) => <div key={i} className="h-16 bg-gray-50 dark:bg-slate-950/50 rounded-2xl animate-pulse" />)}
                         </div>
                     ) : projects.length === 0 ? (
                         <div className="py-20 flex flex-col items-center gap-4 text-center">
-                            <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center">
+                            <div className="w-16 h-16 bg-gray-50 dark:bg-slate-950/50 rounded-2xl flex items-center justify-center">
                                 <AlertCircle size={32} className="text-gray-300" />
                             </div>
                             <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
@@ -409,13 +409,13 @@ const ProjectsTab: React.FC = () => {
                         <div className="divide-y divide-gray-50">
                             {projects.map(project => (
                                 <div key={project.id}
-                                    className="flex items-center justify-between px-6 py-4 hover:bg-gray-50/50 transition-colors group">
+                                    className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 dark:bg-slate-950/50/50 transition-colors group">
                                     <div className="flex items-center gap-4">
                                         <div className={`w-2.5 h-2.5 rounded-full shrink-0 transition-colors ${
                                             project.project_status === 1 ? 'bg-emerald-500' : 'bg-gray-300'
                                         }`} />
                                         <div>
-                                            <p className="font-bold text-gray-800 text-sm group-hover:text-blue-700 transition-colors">
+                                            <p className="font-bold text-gray-800 dark:text-gray-200 text-sm group-hover:text-blue-700 transition-colors">
                                                 {project.project_name}
                                             </p>
                                             <p className="text-[10px] font-bold uppercase tracking-widest mt-0.5 transition-colors">
@@ -521,10 +521,10 @@ const ReportOptionsTab: React.FC = () => {
             <ToastNotif toast={toast} onDismiss={() => setToast(null)} />
             <div className="space-y-6">
                 {/* Add Observation Type */}
-                <div className="bg-white rounded-3xl border border-gray-100 p-6">
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 p-6">
                     <div className="flex items-center gap-2 mb-4">
                         <PlusCircle size={16} className="text-blue-600" />
-                        <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider">
+                        <h3 className="text-sm font-black text-gray-900 dark:text-gray-100 uppercase tracking-wider">
                             {t('settings.reportOptions.addObservation', 'Add Observation Type')}
                         </h3>
                     </div>
@@ -534,7 +534,7 @@ const ReportOptionsTab: React.FC = () => {
                             value={newObsName}
                             onChange={e => setNewObsName(e.target.value)}
                             placeholder={t('settings.reportOptions.obsPlaceholder', 'e.g. Site Inspection...')}
-                            className="flex-1 px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 font-semibold text-gray-700 outline-none transition-all text-sm"
+                            className="flex-1 px-4 py-3 bg-gray-50 dark:bg-slate-950/50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 font-semibold text-gray-700 dark:text-gray-300 outline-none transition-all text-sm"
                             required
                         />
                         <button type="submit" disabled={loading === 'add-obs'}
@@ -548,10 +548,10 @@ const ReportOptionsTab: React.FC = () => {
                 {/* List of Observation Types */}
                 {isLoading ? (
                     <div className="space-y-4">
-                        {[...Array(3)].map((_, i) => <div key={i} className="h-32 bg-gray-50 rounded-3xl animate-pulse" />)}
+                        {[...Array(3)].map((_, i) => <div key={i} className="h-32 bg-gray-50 dark:bg-slate-950/50 rounded-3xl animate-pulse" />)}
                     </div>
                 ) : observationTypes.length === 0 ? (
-                    <div className="bg-white rounded-3xl border border-gray-100 p-12 text-center">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 p-12 text-center">
                         <ListTree size={48} className="text-gray-200 mx-auto mb-4" />
                         <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">
                             {t('settings.reportOptions.noOptions', 'No report options configured.')}
@@ -560,11 +560,11 @@ const ReportOptionsTab: React.FC = () => {
                 ) : (
                     <div className="grid grid-cols-1 gap-6">
                         {observationTypes.map(obs => (
-                            <div key={obs.id} className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-                                <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
+                            <div key={obs.id} className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 overflow-hidden shadow-sm">
+                                <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50 dark:bg-slate-950/50/30">
                                     <div className="flex items-center gap-3">
                                         <div className={`w-2 h-2 rounded-full ${obs.status === 1 ? 'bg-emerald-500' : 'bg-gray-300'}`} />
-                                        <h4 className="font-black text-gray-900 text-sm uppercase tracking-tight">{obs.name}</h4>
+                                        <h4 className="font-black text-gray-900 dark:text-gray-100 text-sm uppercase tracking-tight">{obs.name}</h4>
                                     </div>
                                     <button
                                         onClick={() => handleToggle('observation', obs.id)}
@@ -580,8 +580,8 @@ const ReportOptionsTab: React.FC = () => {
                                 <div className="p-6 space-y-4">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         {obs.work_types.map(wt => (
-                                            <div key={wt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-100 hover:border-blue-200 transition-colors">
-                                                <span className={`text-[11px] font-bold ${wt.status === 1 ? 'text-gray-700' : 'text-gray-400 line-through'}`}>{wt.name}</span>
+                                            <div key={wt.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-950/50 rounded-2xl border border-gray-100 dark:border-slate-800 hover:border-blue-200 transition-colors">
+                                                <span className={`text-[11px] font-bold ${wt.status === 1 ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 line-through'}`}>{wt.name}</span>
                                                 <button
                                                     onClick={() => handleToggle('work_type', wt.id)}
                                                     disabled={loading === `toggle-work_type-${wt.id}`}
@@ -600,7 +600,7 @@ const ReportOptionsTab: React.FC = () => {
                                             value={newWorkNames[obs.id] || ''}
                                             onChange={e => setNewWorkNames(prev => ({ ...prev, [obs.id]: e.target.value }))}
                                             placeholder={t('settings.reportOptions.workTypePlaceholder', 'Add work description...')}
-                                            className="flex-1 px-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-600 font-semibold text-gray-700 outline-none transition-all text-xs"
+                                            className="flex-1 px-4 py-2 bg-gray-50 dark:bg-slate-950/50 border-none rounded-xl focus:ring-2 focus:ring-blue-600 font-semibold text-gray-700 dark:text-gray-300 outline-none transition-all text-xs"
                                         />
                                         <button
                                             onClick={() => handleAddWorkType(obs.id)}
@@ -678,10 +678,10 @@ const PTWOptionsTab: React.FC = () => {
             <ToastNotif toast={toast} onDismiss={() => setToast(null)} />
             <div className="space-y-8">
                 {/* Add Operation Type */}
-                <div className="bg-white rounded-3xl border border-gray-100 p-6">
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 p-6">
                     <div className="flex items-center gap-2 mb-4">
                         <PlusCircle size={16} className="text-indigo-600" />
-                        <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider">
+                        <h3 className="text-sm font-black text-gray-900 dark:text-gray-100 uppercase tracking-wider">
                            Add PTW Operation Type
                         </h3>
                     </div>
@@ -691,7 +691,7 @@ const PTWOptionsTab: React.FC = () => {
                             value={newOp.name}
                             onChange={e => setNewOp({ ...newOp, name: e.target.value })}
                             placeholder="Operation Type"
-                            className="px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-600 font-semibold text-gray-700 outline-none transition-all text-sm"
+                            className="px-4 py-3 bg-gray-50 dark:bg-slate-950/50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-600 font-semibold text-gray-700 dark:text-gray-300 outline-none transition-all text-sm"
                             required
                         />
                         <input
@@ -699,7 +699,7 @@ const PTWOptionsTab: React.FC = () => {
                             value={newOp.risk}
                             onChange={e => setNewOp({ ...newOp, risk: e.target.value })}
                             placeholder="Risk Assessment"
-                            className="px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-600 font-semibold text-gray-700 outline-none transition-all text-sm"
+                            className="px-4 py-3 bg-gray-50 dark:bg-slate-950/50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-600 font-semibold text-gray-700 dark:text-gray-300 outline-none transition-all text-sm"
                             required
                         />
                         <button type="submit" disabled={loading === 'add-op'}
@@ -711,16 +711,16 @@ const PTWOptionsTab: React.FC = () => {
                 </div>
 
                 {/* Operation Types List */}
-                <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-                    <div className="p-6 border-b border-gray-50 bg-gray-50/30">
-                        <h4 className="font-black text-gray-900 text-sm uppercase tracking-tight">PTW Operation Types</h4>
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 overflow-hidden shadow-sm">
+                    <div className="p-6 border-b border-gray-50 bg-gray-50 dark:bg-slate-950/50/30">
+                        <h4 className="font-black text-gray-900 dark:text-gray-100 text-sm uppercase tracking-tight">PTW Operation Types</h4>
                     </div>
                     <div className="divide-y divide-gray-50">
                         {operationTypes.map(op => (
-                            <div key={op.id} className="flex items-center justify-between p-4 hover:bg-gray-50/50 transition-colors">
+                            <div key={op.id} className="flex items-center justify-between p-4 hover:bg-gray-50 dark:bg-slate-950/50/50 transition-colors">
                                 <div className="flex flex-col gap-1 max-w-[70%]">
-                                    <span className={`text-sm font-bold ${op.is_active === 1 ? 'text-gray-900' : 'text-gray-400 line-through'}`}>{op.operation_name}</span>
-                                    <span className="text-[10px] text-gray-500 font-medium italic">{op.risk_assessment}</span>
+                                    <span className={`text-sm font-bold ${op.is_active === 1 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 line-through'}`}>{op.operation_name}</span>
+                                    <span className="text-[10px] text-gray-500 dark:text-slate-400 font-medium italic">{op.risk_assessment}</span>
                                 </div>
                                 <button
                                     onClick={() => handleToggle('operation', op.id, op.is_active)}
@@ -738,10 +738,10 @@ const PTWOptionsTab: React.FC = () => {
 
                 {/* Safety Measures Section */}
                 <div className="grid grid-cols-1 gap-8">
-                    <div className="bg-white rounded-3xl border border-gray-100 p-6">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 p-6">
                         <div className="flex items-center gap-2 mb-4">
                             <PlusCircle size={16} className="text-emerald-600" />
-                            <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider">
+                            <h3 className="text-sm font-black text-gray-900 dark:text-gray-100 uppercase tracking-wider">
                                 Add Safety Measure
                             </h3>
                         </div>
@@ -751,7 +751,7 @@ const PTWOptionsTab: React.FC = () => {
                                 value={newMeasure}
                                 onChange={e => setNewMeasure(e.target.value)}
                                 placeholder="Enter safety measure text..."
-                                className="flex-1 px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-600 font-semibold text-gray-700 outline-none transition-all text-sm"
+                                className="flex-1 px-4 py-3 bg-gray-50 dark:bg-slate-950/50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-600 font-semibold text-gray-700 dark:text-gray-300 outline-none transition-all text-sm"
                                 required
                             />
                             <button type="submit" disabled={loading === 'add-measure'}
@@ -762,12 +762,12 @@ const PTWOptionsTab: React.FC = () => {
                         </form>
                     </div>
 
-                    <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
-                        <h4 className="font-black text-gray-900 text-sm uppercase tracking-tight mb-4">Safety Measures (Checkboxes)</h4>
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 p-6 shadow-sm">
+                        <h4 className="font-black text-gray-900 dark:text-gray-100 text-sm uppercase tracking-tight mb-4">Safety Measures (Checkboxes)</h4>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {safetyMeasures.map(sm => (
-                                <div key={sm.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-100">
-                                    <span className={`text-[11px] font-bold ${sm.is_active === 1 ? 'text-gray-700' : 'text-gray-400 line-through'}`}>{sm.measure_name}</span>
+                                <div key={sm.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-950/50 rounded-2xl border border-gray-100 dark:border-slate-800">
+                                    <span className={`text-[11px] font-bold ${sm.is_active === 1 ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 line-through'}`}>{sm.measure_name}</span>
                                     <button
                                         onClick={() => handleToggle('measure', sm.id, sm.is_active)}
                                         disabled={loading === `toggle-measure-${sm.id}`}
@@ -806,13 +806,13 @@ const SettingsPage: React.FC = () => {
                     <Settings size={28} />
                 </div>
                 <div>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">{t('nav.settings', 'Settings')}</h1>
-                    <p className="text-sm font-medium text-gray-500 mt-1">{t('settings.subtitle', 'Manage users and project configuration')}</p>
+                    <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">{t('nav.settings', 'Settings')}</h1>
+                    <p className="text-sm font-medium text-gray-500 dark:text-slate-400 mt-1">{t('settings.subtitle', 'Manage users and project configuration')}</p>
                 </div>
             </div>
 
             {/* Tab Switcher */}
-            <div className="flex gap-2 bg-gray-100/80 p-1.5 rounded-2xl w-fit">
+            <div className="flex gap-2 bg-gray-100 dark:bg-slate-800/80 p-1.5 rounded-2xl w-fit">
                 {tabs.map(tab => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.key;
@@ -822,8 +822,8 @@ const SettingsPage: React.FC = () => {
                             onClick={() => setActiveTab(tab.key)}
                             className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-wider transition-all duration-200 ${
                                 isActive
-                                    ? 'bg-white text-blue-700 shadow-md shadow-gray-200'
-                                    : 'text-gray-500 hover:text-gray-700'
+                                    ? 'bg-white dark:bg-slate-900 text-blue-700 shadow-md shadow-gray-200'
+                                    : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:text-gray-300'
                             }`}>
                             <Icon size={16} />
                             {tab.label}

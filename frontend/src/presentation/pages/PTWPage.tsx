@@ -26,7 +26,7 @@ interface PTWPermit {
 interface HistoryEntry { action: string; action_by: string; action_date: string; notes: string; }
 interface ImageEntry { image_path: string; image_type: string; }
 
-const ic = "w-full px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all";
+const ic = "w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all";
 const btn = (color: string) => `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all hover:-translate-y-0.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0 ${color}`;
 
 const getStatusInfo = (status: number, t: any) => {
@@ -36,7 +36,7 @@ const getStatusInfo = (status: number, t: any) => {
         case 2: return { label: t('ptw.status.finished'), style: 'bg-green-50 text-green-700 border-green-200', icon: '✔' };
         case 3: return { label: t('ptw.status.notCompleted'), style: 'bg-orange-50 text-orange-700 border-orange-200', icon: '❌' };
         case 4: return { label: t('ptw.status.nonCompliance'), style: 'bg-red-50 text-red-700 border-red-200', icon: '⚠️' };
-        default: return { label: t('common.unassigned'), style: 'bg-gray-50 text-gray-700 border-gray-200', icon: '❓' };
+        default: return { label: t('common.unassigned'), style: 'bg-gray-50 dark:bg-slate-950/50 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-slate-700', icon: '❓' };
     }
 };
 
@@ -57,7 +57,7 @@ const ExpandedDetails: React.FC<{ permit: PTWPermit }> = ({ permit }) => {
     const baseUrl = (import.meta.env.VITE_API_URL || '/api').replace('/api', '');
 
     return (
-        <tr className="bg-gray-50">
+        <tr className="bg-gray-50 dark:bg-slate-950/50">
             <td colSpan={13} className="px-6 py-5">
                 {lightbox && (
                     <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center" onClick={() => setLightbox(null)}>
@@ -67,10 +67,10 @@ const ExpandedDetails: React.FC<{ permit: PTWPermit }> = ({ permit }) => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                     {/* Details columns */}
                     <div className="md:col-span-2 space-y-3">
-                        <h4 className="font-bold text-gray-700 text-sm flex items-center gap-2">
+                        <h4 className="font-bold text-gray-700 dark:text-gray-300 text-sm flex items-center gap-2">
                             <FileText size={14} className="text-indigo-500" /> Permit Details
                         </h4>
-                        <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                        <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
                             {[
                                 ['Work Location', permit.work_location],
                                 ['Work Description', permit.work_description],
@@ -84,15 +84,15 @@ const ExpandedDetails: React.FC<{ permit: PTWPermit }> = ({ permit }) => {
                                 ['End Time', permit.end_time],
                                 ['Company', permit.company_name || '—'],
                             ].map(([label, val]) => val ? (
-                                <div key={label} className="bg-white rounded-lg p-2.5 border border-gray-100">
-                                    <div className="font-semibold text-gray-500 text-[10px] uppercase mb-0.5">{label}</div>
-                                    <div className="text-gray-800 font-medium" dir="rtl">{val}</div>
+                                <div key={label} className="bg-white dark:bg-slate-900 rounded-lg p-2.5 border border-gray-100 dark:border-slate-800">
+                                    <div className="font-semibold text-gray-500 dark:text-slate-400 text-[10px] uppercase mb-0.5">{label}</div>
+                                    <div className="text-gray-800 dark:text-gray-200 font-medium" dir="rtl">{val}</div>
                                 </div>
                             ) : null)}
                         </div>
 
                         {/* History */}
-                        <h4 className="font-bold text-gray-700 text-sm flex items-center gap-2 mt-4">
+                        <h4 className="font-bold text-gray-700 dark:text-gray-300 text-sm flex items-center gap-2 mt-4">
                             📋 PTW History
                         </h4>
                         {hLoad ? (
@@ -100,14 +100,14 @@ const ExpandedDetails: React.FC<{ permit: PTWPermit }> = ({ permit }) => {
                         ) : history?.length ? (
                             <div className="space-y-1.5">
                                 {history.map((h, i) => (
-                                    <div key={i} className="flex items-start gap-3 bg-white border-l-4 border-indigo-400 rounded-r-lg p-2.5">
+                                    <div key={i} className="flex items-start gap-3 bg-white dark:bg-slate-900 border-l-4 border-indigo-400 rounded-r-lg p-2.5">
                                         <div className="flex-shrink-0 w-20 text-[10px] text-gray-400 font-mono">
                                             {new Date(h.action_date).toLocaleDateString()}
                                         </div>
                                         <div>
                                             <span className="font-semibold text-xs text-indigo-700">{h.action}</span>
-                                            <span className="text-gray-500 text-xs ml-2">by {h.action_by}</span>
-                                            {h.notes && <div className="text-xs text-gray-500 mt-0.5">{h.notes}</div>}
+                                            <span className="text-gray-500 dark:text-slate-400 text-xs ml-2">by {h.action_by}</span>
+                                            {h.notes && <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{h.notes}</div>}
                                         </div>
                                     </div>
                                 ))}
@@ -119,7 +119,7 @@ const ExpandedDetails: React.FC<{ permit: PTWPermit }> = ({ permit }) => {
 
                     {/* Images */}
                     <div>
-                        <h4 className="font-bold text-gray-700 text-sm flex items-center gap-2 mb-3">
+                        <h4 className="font-bold text-gray-700 dark:text-gray-300 text-sm flex items-center gap-2 mb-3">
                             📷 Attached Images
                         </h4>
                         {iLoad ? (
@@ -131,13 +131,13 @@ const ExpandedDetails: React.FC<{ permit: PTWPermit }> = ({ permit }) => {
                                         key={i}
                                         src={`${baseUrl}/assests/uploads/ptw_closure/${img.image_path}`}
                                         alt={img.image_type}
-                                        className="w-24 h-24 object-cover rounded-xl border-2 border-gray-200 cursor-pointer hover:scale-105 transition-transform shadow-sm"
+                                        className="w-24 h-24 object-cover rounded-xl border-2 border-gray-200 dark:border-slate-700 cursor-pointer hover:scale-105 transition-transform shadow-sm"
                                         onClick={() => setLightbox(`${baseUrl}/assests/uploads/ptw_closure/${img.image_path}`)}
                                     />
                                 ))}
                             </div>
                         ) : (
-                            <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center text-xs text-gray-400">
+                            <div className="border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-xl p-6 text-center text-xs text-gray-400">
                                 No images attached
                             </div>
                         )}
@@ -166,11 +166,11 @@ const ApproveModal: React.FC<{ permit: PTWPermit; onClose: () => void; onDone: (
 
     return (
         <Modal title={`✅ Approve Permit ${permit.permit_number}`} onClose={onClose}>
-            <p className="text-sm text-gray-500 mb-4">Enter safety details to approve this permit.</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">Enter safety details to approve this permit.</p>
             {error && <div className="text-xs text-red-600 bg-red-50 p-2 rounded-lg mb-3">{error}</div>}
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Safety Manager</label>
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Safety Manager</label>
             <input className={`${ic} mb-3`} value={form.safety_manager} onChange={e => setForm(f => ({ ...f, safety_manager: e.target.value }))} placeholder="أدخل اسم مسؤول السلامة" />
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Safety Signature</label>
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Safety Signature</label>
             <input className={`${ic} mb-4`} value={form.safety_signature} onChange={e => setForm(f => ({ ...f, safety_signature: e.target.value }))} placeholder="التوقيع" />
             <button disabled={loading || !form.safety_manager} onClick={submit} className="w-full py-2.5 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 disabled:opacity-40 flex items-center justify-center gap-2">
                 {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />} Approve Permit
@@ -197,7 +197,7 @@ const FinishModal: React.FC<{ permit: PTWPermit; onClose: () => void; onDone: ()
 
     return (
         <Modal title={`✔ Finish Permit ${permit.permit_number}`} onClose={onClose}>
-            <p className="text-sm text-gray-500 mb-4">Complete or close this permit. Leave cancellation reason empty to mark as Finished.</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">Complete or close this permit. Leave cancellation reason empty to mark as Finished.</p>
             {error && <div className="text-xs text-red-600 bg-red-50 p-2 rounded-lg mb-3">{error}</div>}
             {[
                 ['Completion Date', 'date', 'completion_date'],
@@ -205,12 +205,12 @@ const FinishModal: React.FC<{ permit: PTWPermit; onClose: () => void; onDone: ()
                 ['Safety Signature', 'text', 'safety_signature_3'],
             ].map(([label, type, key]) => (
                 <div key={key} className="mb-3">
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">{label}</label>
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{label}</label>
                     <input type={type} className={ic} value={(form as any)[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
                 </div>
             ))}
             <div className="mb-4">
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Cancellation Reason (if not completed)</label>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Cancellation Reason (if not completed)</label>
                 <input className={ic} value={form.cancellation_reason} onChange={e => setForm(f => ({ ...f, cancellation_reason: e.target.value }))} placeholder="Leave empty if work was completed" />
             </div>
             <button disabled={loading} onClick={submit} className="w-full py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-40 flex items-center justify-center gap-2">
@@ -224,10 +224,10 @@ const FinishModal: React.FC<{ permit: PTWPermit; onClose: () => void; onDone: ()
 // ─── Reusable Modal Wrapper ───────────────────────────────────────────────────
 const Modal: React.FC<{ title: string; onClose: () => void; children: React.ReactNode }> = ({ title, onClose, children }) => (
     <div className="fixed inset-0 z-40 bg-black/50 flex items-center justify-center p-4" onClick={e => e.target === e.currentTarget && onClose()}>
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-5">
-                <h3 className="font-bold text-gray-900 text-base">{title}</h3>
-                <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={20} /></button>
+                <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">{title}</h3>
+                <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:text-gray-400 transition-colors"><X size={20} /></button>
             </div>
             {children}
         </div>
@@ -323,13 +323,13 @@ const PTWPage: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+                    <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 flex items-center gap-3">
                         <div className="p-2 bg-indigo-600 text-white rounded-2xl shadow-lg shadow-indigo-100">
                             <ClipboardCheck size={28} />
                         </div>
                         {t('ptw.title')}
                     </h1>
-                    <p className="text-sm font-medium text-gray-500 mt-2 ml-14">{t('ptw.subtitle', { count: total })}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-slate-400 mt-2 ml-14">{t('ptw.subtitle', { count: total })}</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
@@ -340,7 +340,7 @@ const PTWPage: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-all ${showFilters ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-all ${showFilters ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-slate-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:bg-slate-950/50'}`}
                     >
                         {showFilters ? <X size={16} /> : <Filter size={16} />}
                         {t('common.filter')}
@@ -360,7 +360,7 @@ const PTWPage: React.FC = () => {
 
             {/* Filter Panel */}
             {showFilters && (
-                <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-6 animate-in slide-in-from-top-4 duration-500 overflow-hidden shadow-sm">
+                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-gray-100 dark:border-slate-800 p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 md:gap-6 animate-in slide-in-from-top-4 duration-500 overflow-hidden shadow-sm">
                     <div className="flex flex-col gap-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('ptw.filters.permitNumber')}</label>
                         <div className="relative">
@@ -370,27 +370,27 @@ const PTWPage: React.FC = () => {
                                 placeholder={t('ptw.filters.searchPlaceholder')}
                                 onChange={(e) => updateFilter('search', e.target.value)}
                                 value={filters.search ?? ''}
-                                className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-2xl text-[11px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                                className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-950/50 border-none rounded-2xl text-[11px] font-bold text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
                             />
                         </div>
                     </div>
                     <div className="flex flex-col gap-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('common.project')}</label>
-                        <select onChange={(e) => updateFilter('project', e.target.value)} value={filters.project ?? ''} className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl text-[11px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer appearance-none">
+                        <select onChange={(e) => updateFilter('project', e.target.value)} value={filters.project ?? ''} className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-950/50 border-none rounded-2xl text-[11px] font-bold text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer appearance-none">
                             <option value="">{t('ptw.filters.allProjects', 'All Projects')}</option>
                             {projects.map(p => <option key={p.id} value={p.id}>{p.project_name}</option>)}
                         </select>
                     </div>
                     <div className="flex flex-col gap-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('common.department')}</label>
-                        <select onChange={(e) => updateFilter('department', e.target.value)} value={filters.department ?? ''} className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl text-[11px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer appearance-none">
+                        <select onChange={(e) => updateFilter('department', e.target.value)} value={filters.department ?? ''} className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-950/50 border-none rounded-2xl text-[11px] font-bold text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer appearance-none">
                             <option value="">{t('ptw.filters.allDepartments', 'All Departments')}</option>
                             {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
                         </select>
                     </div>
                     <div className="flex flex-col gap-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('ptw.operationType')}</label>
-                        <select onChange={(e) => updateFilter('type', e.target.value)} value={filters.type ?? ''} className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl text-[11px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer appearance-none">
+                        <select onChange={(e) => updateFilter('type', e.target.value)} value={filters.type ?? ''} className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-950/50 border-none rounded-2xl text-[11px] font-bold text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer appearance-none">
                             <option value="">{t('ptw.filters.allOperations')}</option>
                             <option value="Cold Work">{t('ptw.operations.cold')}</option>
                             <option value="Hot Work">{t('ptw.operations.hot')}</option>
@@ -402,7 +402,7 @@ const PTWPage: React.FC = () => {
                     </div>
                     <div className="flex flex-col gap-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('common.status')}</label>
-                        <select onChange={(e) => updateFilter('status', e.target.value)} value={filters.status ?? ''} className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl text-[11px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer appearance-none">
+                        <select onChange={(e) => updateFilter('status', e.target.value)} value={filters.status ?? ''} className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-950/50 border-none rounded-2xl text-[11px] font-bold text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer appearance-none">
                             <option value="">{t('ptw.filters.allStatuses', 'All Statuses')}</option>
                             <option value="0">{t('ptw.status.pending')}</option>
                             <option value="1">{t('ptw.status.approved')}</option>
@@ -413,11 +413,11 @@ const PTWPage: React.FC = () => {
                     </div>
                     <div className="flex flex-col gap-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('common.startDate')}</label>
-                        <input type="date" onChange={(e) => updateFilter('startDate', e.target.value)} value={filters.startDate ?? ''} className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl text-[11px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+                        <input type="date" onChange={(e) => updateFilter('startDate', e.target.value)} value={filters.startDate ?? ''} className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-950/50 border-none rounded-2xl text-[11px] font-bold text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all" />
                     </div>
                     <div className="flex flex-col gap-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('common.endDate')}</label>
-                        <input type="date" onChange={(e) => updateFilter('endDate', e.target.value)} value={filters.endDate ?? ''} className="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl text-[11px] font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-sans" />
+                        <input type="date" onChange={(e) => updateFilter('endDate', e.target.value)} value={filters.endDate ?? ''} className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-950/50 border-none rounded-2xl text-[11px] font-bold text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-sans" />
                     </div>
                     <div className="flex flex-col gap-2 xl:col-span-1 xl:justify-end">
                         <button
@@ -431,24 +431,24 @@ const PTWPage: React.FC = () => {
             )}
 
             {/* Table */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 overflow-hidden">
                 {isLoading ? (
                     <div className="p-10 space-y-3">
-                        {[...Array(8)].map((_, i) => <div key={i} className="h-10 bg-gray-100 rounded-lg animate-pulse" />)}
+                        {[...Array(8)].map((_, i) => <div key={i} className="h-10 bg-gray-100 dark:bg-slate-800 rounded-lg animate-pulse" />)}
                     </div>
                 ) : permits.length === 0 ? (
                     <div className="text-center py-20">
                         <Search size={40} className="mx-auto text-gray-300 mb-3" />
-                        <p className="text-gray-500 font-medium">No permits match your filters</p>
+                        <p className="text-gray-500 dark:text-slate-400 font-medium">No permits match your filters</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto w-full">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="bg-gray-50 border-b border-gray-100">
+                                <tr className="bg-gray-50 dark:bg-slate-950/50 border-b border-gray-100 dark:border-slate-800">
                                     <th className="px-3 py-3 w-8"></th>
                                     {['Permit #', 'Department', 'Project', 'Work Location', 'Date', 'Operation', 'Status', 'Actions'].map(h => (
-                                        <th key={h} className="text-left px-4 py-3 text-xs uppercase tracking-wider text-gray-500 font-semibold whitespace-nowrap">{h}</th>
+                                        <th key={h} className="text-left px-4 py-3 text-xs uppercase tracking-wider text-gray-500 dark:text-slate-400 font-semibold whitespace-nowrap">{h}</th>
                                     ))}
                                 </tr>
                             </thead>
@@ -458,7 +458,7 @@ const PTWPage: React.FC = () => {
                                     const isOpen = expanded === p.permit_number;
                                     return (
                                         <React.Fragment key={p.id}>
-                                            <tr className={`border-b border-gray-50 transition-colors ${isOpen ? 'bg-indigo-50/40' : 'hover:bg-gray-50/60'}`}>
+                                            <tr className={`border-b border-gray-50 transition-colors ${isOpen ? 'bg-indigo-50/40' : 'hover:bg-gray-50 dark:bg-slate-950/50/60'}`}>
                                                 {/* Expand toggle */}
                                                 <td className="px-3 py-3">
                                                     <button
@@ -469,11 +469,11 @@ const PTWPage: React.FC = () => {
                                                     </button>
                                                 </td>
                                                 <td className="px-4 py-3 font-mono text-xs text-indigo-600 font-bold whitespace-nowrap">{p.permit_number}</td>
-                                                <td className="px-4 py-3 text-gray-600 text-xs">{p.department_name || '—'}</td>
-                                                <td className="px-4 py-3 text-gray-800 font-medium text-xs max-w-[120px] truncate">{p.project_name}</td>
-                                                <td className="px-4 py-3 text-gray-600 text-xs max-w-[100px] truncate">{p.work_location}</td>
-                                                <td className="px-4 py-3 text-gray-600 text-xs">{p.permit_date ? new Date(p.permit_date).toLocaleDateString('en-GB') : '—'}</td>
-                                                <td className="px-4 py-3 text-gray-600 text-xs max-w-[140px] truncate" dir="rtl">{p.operation_type}</td>
+                                                <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-xs">{p.department_name || '—'}</td>
+                                                <td className="px-4 py-3 text-gray-800 dark:text-gray-200 font-medium text-xs max-w-[120px] truncate">{p.project_name}</td>
+                                                <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-xs max-w-[100px] truncate">{p.work_location}</td>
+                                                <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-xs">{p.permit_date ? new Date(p.permit_date).toLocaleDateString('en-GB') : '—'}</td>
+                                                <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-xs max-w-[140px] truncate" dir="rtl">{p.operation_type}</td>
                                                 <td className="px-4 py-3">
                                                     <span className={`text-[10px] px-2 py-1 rounded-full border font-semibold whitespace-nowrap ${status.style}`}>
                                                         {status.icon} {status.label}
@@ -540,24 +540,24 @@ const PTWPage: React.FC = () => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100">
+                    <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100 dark:border-slate-800">
                         <p className="text-xs text-gray-400">Page {page} of {totalPages} · {total} records</p>
                         <div className="flex items-center gap-2">
-                            <button disabled={page <= 1} onClick={() => setPage(1)} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-30 text-xs">⇤</button>
-                            <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-30"><ChevronLeft size={15} /></button>
+                            <button disabled={page <= 1} onClick={() => setPage(1)} className="p-2 rounded-lg border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:bg-slate-950/50 disabled:opacity-30 text-xs">⇤</button>
+                            <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="p-2 rounded-lg border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:bg-slate-950/50 disabled:opacity-30"><ChevronLeft size={15} /></button>
                             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                                 const start = Math.max(1, Math.min(page - 2, totalPages - 4));
                                 const num = start + i;
                                 if (num > totalPages) return null;
                                 return (
                                     <button key={num} onClick={() => setPage(num)}
-                                        className={`w-9 h-9 rounded-lg text-sm font-medium ${page === num ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100 border border-gray-200'}`}>
+                                        className={`w-9 h-9 rounded-lg text-sm font-medium ${page === num ? 'bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700'}`}>
                                         {num}
                                     </button>
                                 );
                             })}
-                            <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-30"><ChevronRight size={15} /></button>
-                            <button disabled={page >= totalPages} onClick={() => setPage(totalPages)} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-30 text-xs">⇥</button>
+                            <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="p-2 rounded-lg border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:bg-slate-950/50 disabled:opacity-30"><ChevronRight size={15} /></button>
+                            <button disabled={page >= totalPages} onClick={() => setPage(totalPages)} className="p-2 rounded-lg border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:bg-slate-950/50 disabled:opacity-30 text-xs">⇥</button>
                         </div>
                     </div>
                 )}

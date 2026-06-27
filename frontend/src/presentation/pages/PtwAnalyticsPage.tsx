@@ -53,7 +53,7 @@ const PtwAnalyticsPage: React.FC = () => {
     if (loading && !stats) return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
             <RefreshCw className="animate-spin text-blue-600" size={48} />
-            <p className="text-gray-500 font-medium tracking-widest uppercase text-xs">{t('common.loading')}</p>
+            <p className="text-gray-500 dark:text-slate-400 font-medium tracking-widest uppercase text-xs">{t('common.loading')}</p>
         </div>
     );
 
@@ -63,8 +63,8 @@ const PtwAnalyticsPage: React.FC = () => {
                 <AlertTriangle size={40} />
             </div>
             <div className="text-center space-y-2">
-                <h3 className="text-xl font-black text-gray-900">{t('common.error')}</h3>
-                <p className="text-gray-500 font-medium">{t('ptw.syncError', 'Unable to connect to the PTW data engine.')}</p>
+                <h3 className="text-xl font-black text-gray-900 dark:text-gray-100">{t('common.error')}</h3>
+                <p className="text-gray-500 dark:text-slate-400 font-medium">{t('ptw.syncError', 'Unable to connect to the PTW data engine.')}</p>
             </div>
             <button
                 onClick={fetchAnalytics}
@@ -93,16 +93,16 @@ const PtwAnalyticsPage: React.FC = () => {
         : 0;
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
+        <div className="max-w-7xl mx-auto space-y-4 md:space-y-8 animate-in fade-in duration-700">
             {/* Header & Advanced Filter Bar */}
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">{t('ptw.analyticsTitle')}</h1>
-                    <p className="text-gray-500 mt-1 font-medium">{t('ptw.analyticsSubtitle')}</p>
+                    <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">{t('ptw.analyticsTitle')}</h1>
+                    <p className="text-gray-500 dark:text-slate-400 mt-1 font-medium">{t('ptw.analyticsSubtitle')}</p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm overflow-x-auto max-w-full">
-                    <div className="flex items-center gap-2 px-3 border-r border-l border-gray-100 shrink-0">
+                <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-x-auto max-w-full">
+                    <div className="flex items-center gap-2 px-3 border-r border-l border-gray-100 dark:border-slate-800 shrink-0">
                         <Filter size={16} className="text-blue-600" />
                         <span className="text-xs font-bold uppercase tracking-widest text-gray-400">{t('common.filter')}</span>
                     </div>
@@ -114,14 +114,14 @@ const PtwAnalyticsPage: React.FC = () => {
                                 type="date" 
                                 value={filters.startDate} 
                                 onChange={e => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
-                                className="text-xs bg-gray-50 border-none rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none font-semibold"
+                                className="text-xs bg-gray-50 dark:bg-slate-950/50 border-none rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none font-semibold"
                             />
                             <span className="text-gray-300">-</span>
                             <input 
                                 type="date" 
                                 value={filters.endDate} 
                                 onChange={e => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
-                                className="text-xs bg-gray-50 border-none rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none font-semibold"
+                                className="text-xs bg-gray-50 dark:bg-slate-950/50 border-none rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none font-semibold"
                             />
                         </div>
                     </div>
@@ -131,7 +131,7 @@ const PtwAnalyticsPage: React.FC = () => {
                         <select
                             value={filters.project}
                             onChange={e => setFilters(prev => ({ ...prev, project: e.target.value }))}
-                            className="text-xs bg-gray-50 border-none rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none font-semibold min-w-[120px]"
+                            className="text-xs bg-gray-50 dark:bg-slate-950/50 border-none rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none font-semibold min-w-[120px]"
                         >
                             <option value="">{t('common.all')}</option>
                             {projects.map(p => <option key={p.id} value={p.id}>{p.project_name}</option>)}
@@ -143,7 +143,7 @@ const PtwAnalyticsPage: React.FC = () => {
                         <select
                             value={filters.department}
                             onChange={e => setFilters(prev => ({ ...prev, department: e.target.value }))}
-                            className="text-xs bg-gray-50 border-none rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none font-semibold min-w-[120px]"
+                            className="text-xs bg-gray-50 dark:bg-slate-950/50 border-none rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none font-semibold min-w-[120px]"
                         >
                             <option value="">{t('common.all')}</option>
                             {allDepartments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
@@ -155,7 +155,7 @@ const PtwAnalyticsPage: React.FC = () => {
                         <select
                             value={filters.operation}
                             onChange={e => setFilters(prev => ({ ...prev, operation: e.target.value }))}
-                            className="text-xs bg-gray-50 border-none rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none font-semibold min-w-[150px]"
+                            className="text-xs bg-gray-50 dark:bg-slate-950/50 border-none rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none font-semibold min-w-[150px]"
                         >
                             <option value="">{t('common.all')}</option>
                             {operations.map(op => <option key={op} value={op}>{op}</option>)}
@@ -164,7 +164,7 @@ const PtwAnalyticsPage: React.FC = () => {
 
                     <button
                         onClick={() => setFilters({ project: '', department: '', operation: '', startDate: '', endDate: '' })}
-                        className="p-2 bg-gray-50 text-gray-400 rounded-xl hover:bg-red-50 hover:text-red-500 transition-colors mt-auto"
+                        className="p-2 bg-gray-50 dark:bg-slate-950/50 text-gray-400 rounded-xl hover:bg-red-50 hover:text-red-500 transition-colors mt-auto"
                         title={t('common.reset')}
                     >
                         <RefreshCw size={18} />
@@ -174,7 +174,7 @@ const PtwAnalyticsPage: React.FC = () => {
 
             {/* Metrics Bar */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden group">
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-gray-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <Clock size={80} className="text-orange-600" />
                     </div>
@@ -188,13 +188,13 @@ const PtwAnalyticsPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden group">
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-gray-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <ClipboardCheck size={80} className="text-blue-600" />
                     </div>
                     <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2">{t('ptw.total')}</p>
                     <div className="flex items-end gap-3">
-                        <span className="text-4xl font-black text-gray-900 leading-none">{totalPermits}</span>
+                        <span className="text-4xl font-black text-gray-900 dark:text-gray-100 leading-none">{totalPermits}</span>
                         <div className="flex flex-col">
                             <span className="text-[10px] font-bold text-blue-500 leading-none mb-1 uppercase">{t('ptw.issued', 'ISSUED')}</span>
                             <span className="text-[10px] font-bold text-gray-400 leading-none uppercase">{t('ptw.workUnits', 'WORK UNITS')}</span>
@@ -202,7 +202,7 @@ const PtwAnalyticsPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden group">
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-gray-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <Zap size={80} className="text-amber-600" />
                     </div>
@@ -216,7 +216,7 @@ const PtwAnalyticsPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden group">
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-gray-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <Activity size={80} className="text-emerald-600" />
                     </div>
@@ -234,13 +234,13 @@ const PtwAnalyticsPage: React.FC = () => {
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Departments Chart */}
-                <div className="lg:col-span-2 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8 space-y-8">
+                <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-gray-100 dark:border-slate-800 shadow-sm p-4 md:p-8 space-y-6 md:space-y-8">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
                             <Building size={24} />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-gray-900">{t('ptw.distribution')}</h3>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t('ptw.distribution')}</h3>
                             <p className="text-xs text-gray-400 font-medium">{t('ptw.distributionSub', 'Departmental engagement in permit system')}</p>
                         </div>
                     </div>
@@ -252,10 +252,10 @@ const PtwAnalyticsPage: React.FC = () => {
                             return (
                                 <div key={i} className="group">
                                     <div className="flex items-center justify-between text-sm mb-2 px-1">
-                                        <span className="font-bold text-gray-700 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{dept.name}</span>
+                                        <span className="font-bold text-gray-700 dark:text-gray-300 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{dept.name}</span>
                                         <span className="font-black text-blue-600">{dept.count}</span>
                                     </div>
-                                    <div className="h-4 w-full bg-gray-50 rounded-full overflow-hidden border border-gray-100">
+                                    <div className="h-4 w-full bg-gray-50 dark:bg-slate-950/50 rounded-full overflow-hidden border border-gray-100 dark:border-slate-800">
                                         <div
                                             className="h-full bg-gradient-to-r from-blue-600 to-indigo-500 rounded-full transition-all duration-1000 ease-out"
                                             style={{ width: `${width}%`, transitionDelay: `${i * 80}ms` }}
@@ -268,9 +268,9 @@ const PtwAnalyticsPage: React.FC = () => {
                 </div>
 
                 {/* Operation Types Circle */}
-                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8 flex flex-col items-center justify-center space-y-8">
+                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-gray-100 dark:border-slate-800 shadow-sm p-8 flex flex-col items-center justify-center space-y-8">
                     <div className="text-center">
-                        <h3 className="text-xl font-bold text-gray-900">{t('ptw.profile')}</h3>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t('ptw.profile')}</h3>
                         <p className="text-xs text-gray-400 font-medium">{t('ptw.profileSub', 'Permit categorization by task type')}</p>
                     </div>
 
@@ -299,19 +299,19 @@ const PtwAnalyticsPage: React.FC = () => {
                             })()}
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-3xl font-black text-gray-900 leading-none">{byType.length}</span>
+                            <span className="text-3xl font-black text-gray-900 dark:text-gray-100 leading-none">{byType.length}</span>
                             <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mt-1">{t('ptw.categories')}</span>
                         </div>
                     </div>
 
                     <div className="w-full space-y-2">
                         {byType.slice(0, 4).map((item: any, i: number) => (
-                            <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-gray-50/50 border border-gray-100">
+                            <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-gray-50 dark:bg-slate-950/50/50 border border-gray-100 dark:border-slate-800">
                                 <div className="flex items-center gap-2 overflow-hidden">
                                     <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'][i] }} />
-                                    <span className="text-[10px] font-bold text-gray-600 truncate">{item.type}</span>
+                                    <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 truncate">{item.type}</span>
                                 </div>
-                                <span className="text-[10px] font-black text-gray-900 ml-2">{item.count}</span>
+                                <span className="text-[10px] font-black text-gray-900 dark:text-gray-100 ml-2">{item.count}</span>
                             </div>
                         ))}
                     </div>
@@ -344,11 +344,11 @@ const PtwAnalyticsPage: React.FC = () => {
                                             className="w-full bg-blue-500 rounded-t-lg transition-all duration-1000 ease-out group-hover:bg-blue-400 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.5)]"
                                             style={{ height: `${height}%`, transitionDelay: `${i * 30}ms` }}
                                         />
-                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-white text-gray-900 text-[10px] font-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 text-[10px] font-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                                             {day.count}
                                         </div>
                                     </div>
-                                    <span className="text-[8px] font-bold text-gray-500 uppercase rotate-45 mt-4 origin-left truncate w-8">
+                                    <span className="text-[8px] font-bold text-gray-500 dark:text-slate-400 uppercase rotate-45 mt-4 origin-left truncate w-8">
                                         {new Date(day.date).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'ar-EG', { month: 'short', day: 'numeric' })}
                                     </span>
                                 </div>
@@ -359,14 +359,14 @@ const PtwAnalyticsPage: React.FC = () => {
             </div>
 
             {/* Overdue Section */}
-            <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mb-12">
+            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden mb-12">
                 <div className="p-8 border-b border-gray-50 bg-gradient-to-r from-orange-50/50 to-white flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-orange-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-200">
                             <Clock size={24} />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-gray-900">{t('ptw.registry')}</h3>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t('ptw.registry')}</h3>
                             <p className="text-xs text-orange-500 font-bold uppercase tracking-widest mt-0.5 animate-pulse">{t('ptw.registrySub', 'Compliance Warning')} • {overdueCount} {t('ptw.pending', 'Pending')}</p>
                         </div>
                     </div>
@@ -375,10 +375,10 @@ const PtwAnalyticsPage: React.FC = () => {
                     </button>
                 </div>
 
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto w-full">
                     <table className="w-full text-left border-collapse rtl:text-right">
                         <thead>
-                            <tr className="bg-gray-50/50 border-b border-gray-100">
+                            <tr className="bg-gray-50 dark:bg-slate-950/50/50 border-b border-gray-100 dark:border-slate-800">
                                 <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('ptw.table.idDate', 'Permit ID / Issued')}</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('ptw.table.projectDept', 'Project / Dept')}</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('ptw.table.type', 'Operation Type')}</th>
@@ -389,22 +389,22 @@ const PtwAnalyticsPage: React.FC = () => {
                         <tbody className="divide-y divide-gray-50">
                             {overdueItems.length > 0 ? (
                                 overdueItems.map((r: any, i: number) => {
-                                    const config = statusConfig[r.ptw_status as number] || { label: 'Unknown', color: 'text-gray-400', bg: 'bg-gray-50' };
+                                    const config = statusConfig[r.ptw_status as number] || { label: 'Unknown', color: 'text-gray-400', bg: 'bg-gray-50 dark:bg-slate-950/50' };
                                     return (
-                                        <tr key={i} className="hover:bg-gray-50/30 transition-colors group">
+                                        <tr key={i} className="hover:bg-gray-50 dark:bg-slate-950/50/30 transition-colors group">
                                             <td className="px-8 py-6">
-                                                <div className="font-black text-gray-900 group-hover:text-blue-600 transition-colors">#{r.id}</div>
+                                                <div className="font-black text-gray-900 dark:text-gray-100 group-hover:text-blue-600 transition-colors">#{r.id}</div>
                                                 <div className="text-xs text-gray-400 font-medium mt-1">{new Date(r.permit_date).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'ar-EG')}</div>
                                             </td>
                                             <td className="px-8 py-6">
-                                                <div className="font-bold text-gray-800 text-sm uppercase tracking-tight">{r.project_name || 'General Project'}</div>
+                                                <div className="font-bold text-gray-800 dark:text-gray-200 text-sm uppercase tracking-tight">{r.project_name || 'General Project'}</div>
                                                 <div className="flex items-center gap-1.5 text-xs text-gray-400 font-semibold mt-1">
                                                     <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
                                                     {r.department_name}
                                                 </div>
                                             </td>
                                             <td className="px-8 py-6">
-                                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-600 rounded-lg text-[10px] font-bold">
+                                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 rounded-lg text-[10px] font-bold">
                                                     < Zap size={12} className="text-amber-500" />
                                                     {r.operation_type}
                                                 </div>
@@ -430,7 +430,7 @@ const PtwAnalyticsPage: React.FC = () => {
                                             <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center">
                                                 <CheckCircle size={32} />
                                             </div>
-                                            <p className="text-gray-500 font-bold uppercase tracking-widest text-sm">{t('ptw.noOverdue', 'Permit Shield Active • 0 Overdue Items')}</p>
+                                            <p className="text-gray-500 dark:text-slate-400 font-bold uppercase tracking-widest text-sm">{t('ptw.noOverdue', 'Permit Shield Active • 0 Overdue Items')}</p>
                                         </div>
                                     </td>
                                 </tr>

@@ -8,8 +8,8 @@ import { compressImage } from '../../shared/utils/imageCompression';
 
 
 
-const selectClass = "w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
-const labelClass = "block text-sm font-semibold text-gray-700 mb-1.5";
+const selectClass = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
+const labelClass = "block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5";
 
 const EditReportPage: React.FC = () => {
     const navigate = useNavigate();
@@ -136,7 +136,7 @@ const EditReportPage: React.FC = () => {
         return (
             <div className="max-w-lg mx-auto text-center py-20 flex flex-col items-center gap-4">
                 <Loader2 className="animate-spin text-blue-600" size={40} />
-                <p className="text-gray-500 font-medium italic">Loading report details...</p>
+                <p className="text-gray-500 dark:text-slate-400 font-medium italic">Loading report details...</p>
             </div>
         );
     }
@@ -147,20 +147,20 @@ const EditReportPage: React.FC = () => {
                 <div className="inline-flex p-4 rounded-full bg-green-50 text-green-500 mb-4 animate-bounce">
                     <CheckCircle size={40} />
                 </div>
-                <h2 className="text-xl font-bold text-gray-800">Report Updated!</h2>
-                <p className="text-gray-500 mt-2">Redirecting to reports list...</p>
+                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">Report Updated!</h2>
+                <p className="text-gray-500 dark:text-slate-400 mt-2">Redirecting to reports list...</p>
             </div>
         );
     }
 
     return (
         <div className="max-w-2xl mx-auto pb-10">
-            <button onClick={() => navigate('/reports')} className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 mb-6 transition-colors font-medium">
+            <button onClick={() => navigate('/reports')} className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400 hover:text-blue-600 mb-6 transition-colors font-medium">
                 <ArrowLeft size={16} /> Back to Reports
             </button>
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3 mb-8">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 p-8 shadow-sm">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3 mb-8">
                     <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
                         <FileText size={20} className="text-amber-600" />
                     </div>
@@ -262,7 +262,7 @@ const EditReportPage: React.FC = () => {
                         {/* Existing Images */}
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             {existingImages.map((img, idx) => (
-                                <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-gray-100 bg-gray-50 shadow-sm">
+                                <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950/50 shadow-sm">
                                     <img src={`${import.meta.env.VITE_API_BASE_URL}/assests/uploads/${img}`} alt="existing" className="w-full h-full object-cover" />
                                     <button
                                         type="button"
@@ -290,9 +290,9 @@ const EditReportPage: React.FC = () => {
                                 </div>
                             ))}
 
-                            <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all hover:scale-[1.02]">
+                            <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-slate-700 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all hover:scale-[1.02]">
                                 <ImageIcon size={24} className="text-gray-400" />
-                                <span className="text-[10px] font-black uppercase text-gray-500 text-center px-2">
+                                <span className="text-[10px] font-black uppercase text-gray-500 dark:text-slate-400 text-center px-2">
                                     {compressing ? 'Optimizing...' : 'Add More'}
                                 </span>
                                 <input
@@ -308,7 +308,7 @@ const EditReportPage: React.FC = () => {
                     </div>
 
                     <div className="flex gap-4 pt-4">
-                        <button type="button" onClick={() => navigate('/reports')} className="flex-1 py-3.5 bg-gray-50 text-gray-700 rounded-xl font-bold border border-gray-100 hover:bg-gray-100 transition-all">
+                        <button type="button" onClick={() => navigate('/reports')} className="flex-1 py-3.5 bg-gray-50 dark:bg-slate-950/50 text-gray-700 dark:text-gray-300 rounded-xl font-bold border border-gray-100 dark:border-slate-800 hover:bg-gray-100 dark:bg-slate-800 transition-all">
                             Cancel
                         </button>
                         <button type="submit" disabled={submitting || compressing} className="flex-[2] py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-95">

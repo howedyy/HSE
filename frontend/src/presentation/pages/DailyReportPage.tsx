@@ -214,15 +214,15 @@ const DailyReportPage: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                         <FileText size={24} className="text-blue-600" /> {t('dailyReport.title')}
                     </h1>
-                    <p className="text-sm text-gray-500 mt-1">{t('dailyReport.subtitle', { count: total })}</p>
+                    <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">{t('dailyReport.subtitle', { count: total })}</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-all ${showFilters ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-all ${showFilters ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:bg-slate-950/50'}`}
                     >
                         {showFilters ? <X size={16} /> : <Filter size={16} />}
                         {showFilters ? t('common.filter') : t('common.filter')}
@@ -244,39 +244,39 @@ const DailyReportPage: React.FC = () => {
             </div>
 
             {showFilters && (
-                <div className="bg-white rounded-2xl border border-gray-100 p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-9 gap-4 animate-in slide-in-from-top-2 duration-200">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-9 gap-4 animate-in slide-in-from-top-2 duration-200">
                     <div className="flex flex-col gap-1.5">
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">{t('common.startDate')}</label>
-                        <input type="date" onChange={(e) => updateFilter('startDate', e.target.value)} value={filters.startDate ?? ''} className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white text-gray-700 outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input type="date" onChange={(e) => updateFilter('startDate', e.target.value)} value={filters.startDate ?? ''} className="px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-xs bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">{t('common.endDate')}</label>
-                        <input type="date" onChange={(e) => updateFilter('endDate', e.target.value)} value={filters.endDate ?? ''} className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white text-gray-700 outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input type="date" onChange={(e) => updateFilter('endDate', e.target.value)} value={filters.endDate ?? ''} className="px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-xs bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">{t('common.project')}</label>
-                        <select onChange={(e) => updateFilter('project', e.target.value)} value={filters.project ?? ''} className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white text-gray-700 outline-none focus:ring-2 focus:ring-blue-500">
+                        <select onChange={(e) => updateFilter('project', e.target.value)} value={filters.project ?? ''} className="px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-xs bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">{t('analytics.filters.allProjects')}</option>
                             {projects.map(p => <option key={p.id} value={p.id}>{p.project_name}</option>)}
                         </select>
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">{t('common.department')}</label>
-                        <select onChange={(e) => updateFilter('department', e.target.value)} value={filters.department ?? ''} className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white text-gray-700 outline-none focus:ring-2 focus:ring-blue-500">
+                        <select onChange={(e) => updateFilter('department', e.target.value)} value={filters.department ?? ''} className="px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-xs bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">{t('analytics.filters.allDepartments')}</option>
                             {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
                         </select>
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">{t('dailyReport.filters.createdBy')}</label>
-                        <select onChange={(e) => updateFilter('created_by', e.target.value)} value={filters.created_by ?? ''} className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white text-gray-700 outline-none focus:ring-2 focus:ring-blue-500">
+                        <select onChange={(e) => updateFilter('created_by', e.target.value)} value={filters.created_by ?? ''} className="px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-xs bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">{t('analytics.filters.allUsers')}</option>
                             {users.map(u => <option key={u.id} value={u.id}>{u.username}</option>)}
                         </select>
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">{t('dailyReport.filters.risk')}</label>
-                        <select onChange={(e) => updateFilter('risk', e.target.value)} value={filters.risk ?? ''} className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white text-gray-700 outline-none focus:ring-2 focus:ring-blue-500">
+                        <select onChange={(e) => updateFilter('risk', e.target.value)} value={filters.risk ?? ''} className="px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-xs bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">{t('analytics.filters.allRisks')}</option>
                             <option value="عالية">{t('analytics.filters.high')}</option>
                             <option value="متوسطه">{t('analytics.filters.medium')}</option>
@@ -285,7 +285,7 @@ const DailyReportPage: React.FC = () => {
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">{t('common.status')}</label>
-                        <select onChange={(e) => updateFilter('status', e.target.value)} value={filters.status ?? ''} className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white text-gray-700 outline-none focus:ring-2 focus:ring-blue-500">
+                        <select onChange={(e) => updateFilter('status', e.target.value)} value={filters.status ?? ''} className="px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-xs bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">{t('analytics.filters.allStatuses')}</option>
                             <option value="0">{t('analytics.filters.open')}</option>
                             <option value="1">{t('analytics.filters.resolved')}</option>
@@ -293,7 +293,7 @@ const DailyReportPage: React.FC = () => {
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">{t('dailyReport.filters.limit')}</label>
-                        <select onChange={(e) => updateFilter('limit', e.target.value)} value={filters.limit ?? '20'} className="px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white text-gray-700 outline-none focus:ring-2 focus:ring-blue-500">
+                        <select onChange={(e) => updateFilter('limit', e.target.value)} value={filters.limit ?? '20'} className="px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-xs bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="10">{t('dailyReport.filters.entries', { count: 10 })}</option>
                             <option value="20">{t('dailyReport.filters.entries', { count: 20 })}</option>
                             <option value="50">{t('dailyReport.filters.entries', { count: 50 })}</option>
@@ -303,7 +303,7 @@ const DailyReportPage: React.FC = () => {
                     <div className="flex flex-col gap-1.5 justify-end">
                         <button 
                             onClick={() => { setFilters({}); setPage(1); }}
-                            className="w-full py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-500 hover:bg-gray-50 transition-colors bg-white shadow-sm"
+                            className="w-full py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:bg-slate-950/50 transition-colors bg-white dark:bg-slate-900 shadow-sm"
                         >
                             {t('common.reset')}
                         </button>
@@ -312,21 +312,21 @@ const DailyReportPage: React.FC = () => {
             )}
 
             {/* Table */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 overflow-hidden shadow-sm">
                 {isLoading ? (
                     <div className="p-10 space-y-3">
-                        {[...Array(8)].map((_, i) => <div key={i} className="h-10 bg-gray-50 rounded-lg animate-pulse" />)}
+                        {[...Array(8)].map((_, i) => <div key={i} className="h-10 bg-gray-50 dark:bg-slate-950/50 rounded-lg animate-pulse" />)}
                     </div>
                 ) : reports.length === 0 ? (
                     <div className="text-center py-20">
                         <Search size={40} className="mx-auto text-gray-200 mb-3" />
-                        <p className="text-gray-500 font-medium">No reports match your filters</p>
+                        <p className="text-gray-500 dark:text-slate-400 font-medium">No reports match your filters</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto w-full">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="bg-gray-50/50 border-b border-gray-100">
+                                <tr className="bg-gray-50 dark:bg-slate-950/50/50 border-b border-gray-100 dark:border-slate-800">
                                     <th className="text-left px-5 py-3 text-[10px] uppercase tracking-widest text-gray-400 font-bold">{t('dailyReport.table.id')}</th>
                                     <th className="text-left px-5 py-3 text-[10px] uppercase tracking-widest text-gray-400 font-bold">{t('dailyReport.table.date')}</th>
                                     <th className="text-left px-5 py-3 text-[10px] uppercase tracking-widest text-gray-400 font-bold">{t('dailyReport.table.project')}</th>
@@ -343,17 +343,17 @@ const DailyReportPage: React.FC = () => {
                                 {reports.map((r: any) => (
                                     <tr key={r.id} className="hover:bg-blue-50/20 transition-colors">
                                         <td className="px-5 py-4 text-gray-400 font-mono text-[10px]">#{r.id}</td>
-                                        <td className="px-5 py-4 text-gray-600">{new Date(r.date).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'ar-EG')}</td>
-                                        <td className="px-5 py-4 text-gray-900 font-semibold">{r.project_name}</td>
-                                        <td className="px-5 py-4 text-gray-600">{r.department_name}</td>
-                                        <td className="px-5 py-4 text-gray-600 max-w-[150px] truncate">{r.work_type}</td>
+                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-400">{new Date(r.date).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'ar-EG')}</td>
+                                        <td className="px-5 py-4 text-gray-900 dark:text-gray-100 font-semibold">{r.project_name}</td>
+                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-400">{r.department_name}</td>
+                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-400 max-w-[150px] truncate">{r.work_type}</td>
                                         <td className="px-5 py-4">
                                             <span className={`text-[10px] px-2.5 py-1 rounded-full border font-bold ${riskColor(r.risk)}`}>
                                                 {getRiskLabel(r.risk, t)}
                                             </span>
                                         </td>
                                         <td className="px-5 py-4">{statusBadge(r.report_status, t)}</td>
-                                        <td className="px-5 py-4 text-gray-600 font-medium">{r.created_by}</td>
+                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-400 font-medium">{r.created_by}</td>
                                         <td className="px-5 py-4 text-center">
                                             {r.comments_count > 0 && (
                                                 <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-bold">
@@ -388,7 +388,7 @@ const DailyReportPage: React.FC = () => {
                                                         onClick={() => setEmailingReport(r)}
                                                         disabled={r.email_sent === 1 || isEmailing === r.id}
                                                         className={`p-2 rounded-xl transition-colors ${r.email_sent === 1
-                                                            ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                                                            ? 'text-gray-400 bg-gray-100 dark:bg-slate-800 cursor-not-allowed'
                                                             : 'text-indigo-600 hover:bg-indigo-50'
                                                             }`}
                                                         title={r.email_sent === 1 ? t('dailyReport.actions.mailSent') : t('dailyReport.actions.sendEmail')}
@@ -432,13 +432,13 @@ const DailyReportPage: React.FC = () => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-6 py-4 bg-gray-50/30 border-t border-gray-100">
+                    <div className="flex items-center justify-between px-6 py-4 bg-gray-50 dark:bg-slate-950/50/30 border-t border-gray-100 dark:border-slate-800">
                         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
                             {t('dailyReport.pagination.info', { page, totalPages, total })}
                         </p>
                         <div className="flex items-center gap-2">
-                            <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-30 transition-all"><ChevronLeft size={16} /></button>
-                            <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-30 transition-all"><ChevronRight size={16} /></button>
+                            <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="p-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:bg-slate-950/50 disabled:opacity-30 transition-all"><ChevronLeft size={16} /></button>
+                            <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="p-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:bg-slate-950/50 disabled:opacity-30 transition-all"><ChevronRight size={16} /></button>
                         </div>
                     </div>
                 )}
@@ -447,14 +447,14 @@ const DailyReportPage: React.FC = () => {
             {/* View Details Modal */}
             {selectedReport && (
                 <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
-                    <div className="bg-white rounded-[2rem] w-full max-w-3xl my-8 shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] w-[95%] md:w-full max-w-3xl my-4 md:my-8 shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden">
                         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-8 text-white relative">
-                            <button onClick={() => handleSelectReport(null)} className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors text-white">
+                            <button onClick={() => handleSelectReport(null)} className="absolute top-6 right-6 p-2 bg-white dark:bg-slate-900/10 hover:bg-white dark:bg-slate-900/20 rounded-full transition-colors text-white">
 
                                 <X size={20} />
                             </button>
                             <div className="flex items-start gap-4">
-                                <div className="p-3 bg-white/10 rounded-2xl">
+                                <div className="p-3 bg-white dark:bg-slate-900/10 rounded-2xl">
                                     <FileText size={28} />
                                 </div>
                                 <div>
@@ -469,11 +469,11 @@ const DailyReportPage: React.FC = () => {
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
                                 <div>
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t('common.project')}</p>
-                                    <p className="font-semibold text-gray-900">{selectedReport.project_name}</p>
+                                    <p className="font-semibold text-gray-900 dark:text-gray-100">{selectedReport.project_name}</p>
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t('common.department')}</p>
-                                    <p className="font-semibold text-gray-900">{selectedReport.department_name}</p>
+                                    <p className="font-semibold text-gray-900 dark:text-gray-100">{selectedReport.department_name}</p>
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t('dailyReport.details.riskLevel')}</p>
@@ -488,32 +488,32 @@ const DailyReportPage: React.FC = () => {
                             {/* Observation Details */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                                 <div className="space-y-4">
-                                    <h3 className="text-lg font-bold text-gray-900">{t('dailyReport.details.observationReport')}</h3>
-                                    <div className="bg-gray-50 rounded-2xl p-6 text-gray-700 leading-relaxed border border-gray-100 whitespace-pre-wrap">
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('dailyReport.details.observationReport')}</h3>
+                                    <div className="bg-gray-50 dark:bg-slate-950/50 rounded-2xl p-6 text-gray-700 dark:text-gray-300 leading-relaxed border border-gray-100 dark:border-slate-800 whitespace-pre-wrap">
                                         <div className="grid grid-cols-1 gap-4 text-sm">
                                             <div>
                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t('dailyReport.details.type')}</p>
-                                                <p className="font-semibold text-gray-900">{selectedReport.observation}</p>
+                                                <p className="font-semibold text-gray-900 dark:text-gray-100">{selectedReport.observation}</p>
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t('dailyReport.details.description')}</p>
-                                                <p className="font-semibold text-gray-900">{selectedReport.work_type}</p>
+                                                <p className="font-semibold text-gray-900 dark:text-gray-100">{selectedReport.work_type}</p>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="bg-white rounded-2xl p-6 text-gray-700 leading-relaxed border border-gray-100 whitespace-pre-wrap">
+                                    <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 text-gray-700 dark:text-gray-300 leading-relaxed border border-gray-100 dark:border-slate-800 whitespace-pre-wrap">
                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">{t('dailyReport.details.detailedObservation')}</p>
                                         {selectedReport.description || t('dailyReport.messages.noDescription', 'No detailed description provided.')}
                                     </div>
                                 </div>
 
                                 <div className="space-y-4">
-                                    <h3 className="text-lg font-bold text-gray-900">{t('dailyReport.details.safetyCompliance')}</h3>
-                                    <div className="bg-gray-50 rounded-2xl p-6 text-gray-700 border border-gray-100 italic">
-                                        <p className="text-sm font-bold text-gray-900 underline mb-3 text-center">{selectedReport.observation_description}</p>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('dailyReport.details.safetyCompliance')}</h3>
+                                    <div className="bg-gray-50 dark:bg-slate-950/50 rounded-2xl p-6 text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-slate-800 italic">
+                                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100 underline mb-3 text-center">{selectedReport.observation_description}</p>
                                         <div>
                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t('dailyReport.details.correctiveAction')}</p>
-                                            <p className="font-semibold text-gray-900">{selectedReport.operation_corrective}</p>
+                                            <p className="font-semibold text-gray-900 dark:text-gray-100">{selectedReport.operation_corrective}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -521,14 +521,14 @@ const DailyReportPage: React.FC = () => {
 
                             {/* Observation Images */}
                             <div className="space-y-4">
-                                <h3 className="text-lg font-bold text-gray-900">{t('dailyReport.details.initialEvidence')}</h3>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('dailyReport.details.initialEvidence')}</h3>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                     {(() => {
                                         try {
                                             const imgs = JSON.parse(selectedReport.image_upload);
-                                            if (!imgs || imgs.length === 0) return <p className="text-sm text-gray-400 p-4 bg-gray-50 rounded-2xl">{t('dailyReport.details.noImages')}</p>;
+                                            if (!imgs || imgs.length === 0) return <p className="text-sm text-gray-400 p-4 bg-gray-50 dark:bg-slate-950/50 rounded-2xl">{t('dailyReport.details.noImages')}</p>;
                                             return imgs.map((img: string, i: number) => (
-                                                <div key={i} className="aspect-square rounded-2xl overflow-hidden border border-gray-200 group relative">
+                                                <div key={i} className="aspect-square rounded-2xl overflow-hidden border border-gray-200 dark:border-slate-700 group relative">
                                                     <img
                                                         src={`${import.meta.env.VITE_API_BASE_URL}/assests/uploads/${img}`}
                                                         alt=""
@@ -540,7 +540,7 @@ const DailyReportPage: React.FC = () => {
                                         } catch {
                                             if (selectedReport.image_upload) {
                                                 return (
-                                                    <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 group">
+                                                    <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 dark:border-slate-700 group">
                                                         <img
                                                             src={`${import.meta.env.VITE_API_BASE_URL}/assests/uploads/${selectedReport.image_upload}`}
                                                             alt=""
@@ -550,7 +550,7 @@ const DailyReportPage: React.FC = () => {
                                                     </div>
                                                 );
                                             }
-                                            return <p className="text-sm text-gray-400 p-4 bg-gray-50 rounded-2xl">{t('dailyReport.details.noImages')}</p>;
+                                            return <p className="text-sm text-gray-400 p-4 bg-gray-50 dark:bg-slate-950/50 rounded-2xl">{t('dailyReport.details.noImages')}</p>;
                                         }
                                     })()}
                                 </div>
@@ -591,9 +591,9 @@ const DailyReportPage: React.FC = () => {
                             )}
 
                             {/* Comments Section */}
-                            <div className="pt-10 border-t border-gray-100 space-y-8">
+                            <div className="pt-10 border-t border-gray-100 dark:border-slate-800 space-y-8">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                                         <MessageSquare size={22} className="text-blue-600" />
                                         {t('dailyReport.details.comments', 'Discussion & Comments')}
                                     </h3>
@@ -610,21 +610,21 @@ const DailyReportPage: React.FC = () => {
                                             <p className="text-sm font-medium">Loading conversation...</p>
                                         </div>
                                     ) : comments.length === 0 ? (
-                                        <div className="text-center py-10 bg-gray-50 rounded-[2rem] border border-dashed border-gray-200">
+                                        <div className="text-center py-10 bg-gray-50 dark:bg-slate-950/50 rounded-[2rem] border border-dashed border-gray-200 dark:border-slate-700">
                                             <MessageSquare size={32} className="mx-auto text-gray-300 mb-2" />
-                                            <p className="text-gray-500 text-sm">{t('dailyReport.messages.noComments', 'No comments yet. Start the discussion!')}</p>
+                                            <p className="text-gray-500 dark:text-slate-400 text-sm">{t('dailyReport.messages.noComments', 'No comments yet. Start the discussion!')}</p>
                                         </div>
                                     ) : (
                                         comments.map((comment) => (
                                             <div key={comment.id} className={`flex gap-4 ${comment.is_owner ? 'flex-row-reverse' : ''}`}>
                                                 <div className="flex-shrink-0">
-                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm ${comment.is_owner ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm ${comment.is_owner ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400'}`}>
                                                         {comment.username.substring(0, 1).toUpperCase()}
                                                     </div>
                                                 </div>
                                                 <div className={`flex-1 space-y-2 max-w-[85%] ${comment.is_owner ? 'text-right' : ''}`}>
                                                     <div className={`flex items-center gap-2 mb-1 ${comment.is_owner ? 'justify-end' : ''}`}>
-                                                        <span className="font-bold text-sm text-gray-900">{comment.username}</span>
+                                                        <span className="font-bold text-sm text-gray-900 dark:text-gray-100">{comment.username}</span>
                                                         <span className="text-[10px] text-gray-400 font-medium">
                                                             {new Date(comment.created_at).toLocaleString(i18n.language === 'en' ? 'en-US' : 'ar-EG')}
                                                         </span>
@@ -634,7 +634,7 @@ const DailyReportPage: React.FC = () => {
                                                             </button>
                                                         )}
                                                     </div>
-                                                    <div className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${comment.is_owner ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white border border-gray-100 text-gray-700 rounded-tl-none'}`}>
+                                                    <div className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${comment.is_owner ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 text-gray-700 dark:text-gray-300 rounded-tl-none'}`}>
                                                         {comment.comment_text}
                                                     </div>
                                                     {comment.images && comment.images.length > 0 && (
@@ -644,7 +644,7 @@ const DailyReportPage: React.FC = () => {
                                                                     key={i}
                                                                     src={`${import.meta.env.VITE_API_BASE_URL}/assests/uploads/comments/${img}`}
                                                                     alt="Attachment"
-                                                                    className="w-20 h-20 object-cover rounded-lg border border-gray-200 cursor-zoom-in hover:opacity-80 transition-opacity"
+                                                                    className="w-20 h-20 object-cover rounded-lg border border-gray-200 dark:border-slate-700 cursor-zoom-in hover:opacity-80 transition-opacity"
                                                                     onClick={() => window.open(`${import.meta.env.VITE_API_BASE_URL}/assests/uploads/comments/${img}`)}
                                                                 />
                                                             ))}
@@ -664,7 +664,7 @@ const DailyReportPage: React.FC = () => {
                                                 value={newComment}
                                                 onChange={(e) => setNewComment(e.target.value)}
                                                 placeholder={t('dailyReport.comments.placeholder', 'Write a comment...')}
-                                                className="w-full px-5 py-4 rounded-[1.5rem] border border-gray-200 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all resize-none text-sm font-medium pr-14"
+                                                className="w-full px-5 py-4 rounded-[1.5rem] border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-950/50 focus:bg-white dark:bg-slate-900 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all resize-none text-sm font-medium pr-14"
                                                 rows={2}
                                             />
                                             <button
@@ -678,7 +678,7 @@ const DailyReportPage: React.FC = () => {
 
                                         {/* Image Attachments */}
                                         <div className="flex flex-wrap items-center gap-3">
-                                            <label className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-600 cursor-pointer hover:bg-gray-50 transition-colors">
+                                            <label className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:bg-slate-950/50 transition-colors">
                                                 <ImageIcon size={14} className="text-blue-600" />
                                                 {t('dailyReport.comments.attachImage', 'Attach Images')}
                                                 <input
@@ -714,7 +714,7 @@ const DailyReportPage: React.FC = () => {
 
 
                         {/* Bottom Close Button */}
-                        <div className="p-8 border-t border-gray-100 bg-gray-50 flex justify-end">
+                        <div className="p-8 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950/50 flex justify-end">
                             <button
                                 onClick={() => handleSelectReport(null)}
 
@@ -730,17 +730,17 @@ const DailyReportPage: React.FC = () => {
             {/* Close Observation Modal */}
             {isClosing && (
                 <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-[60] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl animate-in slide-in-from-bottom-8 duration-300">
-                        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/50 rounded-t-[2.5rem]">
+                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-lg shadow-2xl animate-in slide-in-from-bottom-8 duration-300">
+                        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50 dark:bg-slate-950/50/50 rounded-t-[2.5rem]">
                             <div>
-                                <h2 className="text-2xl font-bold text-gray-900">{t('dailyReport.resolution.title')}</h2>
-                                <p className="text-xs text-gray-500 mt-1 font-medium italic">{t('dailyReport.resolution.caseId', { id: isClosing.id })}</p>
+                                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('dailyReport.resolution.title')}</h2>
+                                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 font-medium italic">{t('dailyReport.resolution.caseId', { id: isClosing.id })}</p>
                             </div>
-                            <button onClick={() => setIsClosing(null)} className="p-3 bg-white hover:bg-gray-100 rounded-2xl transition-all shadow-sm">
+                            <button onClick={() => setIsClosing(null)} className="p-3 bg-white dark:bg-slate-900 hover:bg-gray-100 dark:bg-slate-800 rounded-2xl transition-all shadow-sm">
                                 <X size={20} />
                             </button>
                         </div>
-                        <form onSubmit={handleCloseSubmit} className="p-8 space-y-8">
+                        <form onSubmit={handleCloseSubmit} className="p-4 md:p-8 space-y-6 md:space-y-8">
                             <div className="space-y-3">
                                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">{t('dailyReport.resolution.notesLabel')}</label>
                                 <textarea
@@ -748,14 +748,14 @@ const DailyReportPage: React.FC = () => {
                                     value={closureNotes}
                                     onChange={e => setClosureNotes(e.target.value)}
                                     rows={4}
-                                    className="w-full px-5 py-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all resize-none text-sm font-medium"
+                                    className="w-full px-5 py-4 rounded-2xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950/50 focus:bg-white dark:bg-slate-900 focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all resize-none text-sm font-medium"
                                     placeholder={t('dailyReport.resolution.notesPlaceholder')}
                                 />
                             </div>
 
                             <div className="space-y-3">
                                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">{t('dailyReport.resolution.photoLabel')}</label>
-                                <div className="flex items-center gap-6 p-4 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                <div className="flex items-center gap-6 p-4 bg-gray-50 dark:bg-slate-950/50 rounded-2xl border border-dashed border-gray-200 dark:border-slate-700">
                                     {closureImage ? (
                                         <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-green-500 shadow-xl shadow-green-500/20">
                                             <img src={URL.createObjectURL(closureImage)} alt="preview" className="w-full h-full object-cover" />
@@ -768,14 +768,14 @@ const DailyReportPage: React.FC = () => {
                                             </button>
                                         </div>
                                     ) : (
-                                        <label className="w-24 h-24 rounded-2xl bg-white border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:border-green-400 hover:bg-green-50 transition-all hover:scale-105 group">
+                                        <label className="w-24 h-24 rounded-2xl bg-white dark:bg-slate-900 border-2 border-dashed border-gray-200 dark:border-slate-700 flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:border-green-400 hover:bg-green-50 transition-all hover:scale-105 group">
                                             <ImageIcon size={24} className="text-gray-300 group-hover:text-green-500 transition-colors" />
                                             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{isCompressing ? '...' : t('dailyReport.resolution.upload')}</span>
                                             <input type="file" onChange={handleClosureImageChange} accept="image/*" className="hidden" disabled={isCompressing} />
                                         </label>
                                     )}
                                     <div className="flex-1">
-                                        <p className="text-sm font-bold text-gray-700 leading-tight">{t('dailyReport.resolution.proofTitle')}</p>
+                                        <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-tight">{t('dailyReport.resolution.proofTitle')}</p>
                                         <p className="text-[10px] text-gray-400 mt-1.5 font-medium italic">{t('dailyReport.resolution.proofSub')}</p>
                                     </div>
                                 </div>
@@ -795,13 +795,13 @@ const DailyReportPage: React.FC = () => {
             {/* Email Confirmation Modal */}
             {emailingReport && (
                 <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-[60] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col max-h-[90vh]">
+                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-2xl shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col max-h-[90vh]">
                         <div className="bg-gradient-to-r from-indigo-600 to-blue-700 p-8 text-white relative flex-shrink-0">
-                            <button onClick={() => setEmailingReport(null)} className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors text-white">
+                            <button onClick={() => setEmailingReport(null)} className="absolute top-6 right-6 p-2 bg-white dark:bg-slate-900/10 hover:bg-white dark:bg-slate-900/20 rounded-full transition-colors text-white">
                                 <X size={20} />
                             </button>
                             <div className="flex items-start gap-4">
-                                <div className="p-3 bg-white/10 rounded-2xl">
+                                <div className="p-3 bg-white dark:bg-slate-900/10 rounded-2xl">
                                     <Mail size={28} />
                                 </div>
                                 <div>
@@ -811,32 +811,32 @@ const DailyReportPage: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="p-8 space-y-6 bg-white overflow-y-auto custom-scrollbar">
-                            <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100 space-y-3">
-                                <div className="text-xs text-gray-600 space-y-2">
-                                    <div className="bg-white p-3 rounded-lg border border-gray-100 space-y-2">
+                        <div className="p-4 md:p-8 space-y-4 md:space-y-6 bg-white dark:bg-slate-900 overflow-y-auto custom-scrollbar">
+                            <div className="bg-gray-50 dark:bg-slate-950/50 rounded-2xl p-5 border border-gray-100 dark:border-slate-800 space-y-3">
+                                <div className="text-xs text-gray-600 dark:text-gray-400 space-y-2">
+                                    <div className="bg-white dark:bg-slate-900 p-3 rounded-lg border border-gray-100 dark:border-slate-800 space-y-2">
                                         <div className="flex items-start gap-2">
                                             <span className="font-bold text-gray-400 uppercase tracking-widest text-[10px] w-12 pt-0.5">To:</span>
-                                            <span className="font-medium text-gray-800 break-all">{emailingReport.project_department_email || <span className="text-gray-400 italic">No specific department email</span>}</span>
+                                            <span className="font-medium text-gray-800 dark:text-gray-200 break-all">{emailingReport.project_department_email || <span className="text-gray-400 italic">No specific department email</span>}</span>
                                         </div>
                                         <div className="flex items-start gap-2">
                                             <span className="font-bold text-gray-400 uppercase tracking-widest text-[10px] w-12 pt-0.5">CC:</span>
-                                            <div className="flex flex-col gap-1 font-medium text-gray-800 break-all">
+                                            <div className="flex flex-col gap-1 font-medium text-gray-800 dark:text-gray-200 break-all">
                                                 {emailingReport.project_email && <span>{emailingReport.project_email}</span>}
                                                 {emailingReport.department_email && <span>{emailingReport.department_email}</span>}
                                                 <span>Ahmed.ali@edaraproperty.net</span>
                                                 <span>hse.manager@edaraproperty.net</span>
                                             </div>
                                         </div>
-                                        <div className="flex items-start gap-2 pt-2 border-t border-gray-100">
+                                        <div className="flex items-start gap-2 pt-2 border-t border-gray-100 dark:border-slate-800">
                                             <span className="font-bold text-gray-400 uppercase tracking-widest text-[10px] w-12 pt-0.5">Subject:</span>
-                                            <span className="font-medium text-gray-800 break-all">HSE Observation Report - {emailingReport.project_name} (ID: #{emailingReport.id})</span>
+                                            <span className="font-medium text-gray-800 dark:text-gray-200 break-all">HSE Observation Report - {emailingReport.project_name} (ID: #{emailingReport.id})</span>
                                         </div>
                                     </div>
                                     
                                     <div className="mt-4">
                                         <span className="font-bold text-gray-400 uppercase tracking-widest text-[10px] block mb-2">Message Body Preview:</span>
-                                        <div className="bg-white border border-gray-200 rounded-xl p-4 overflow-x-auto shadow-sm">
+                                        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-4 overflow-x-auto shadow-sm">
                                             <div style={{ fontFamily: 'Arial, sans-serif', minWidth: '400px', margin: '0 auto', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
                                                 <div style={{ backgroundColor: '#2196F3', color: 'white', padding: '15px', borderRadius: '5px 5px 0 0', textAlign: 'center' }}>
                                                     <h2 style={{ margin: 0, fontSize: '16px' }}>New HSE Observation Report</h2>
@@ -869,7 +869,7 @@ const DailyReportPage: React.FC = () => {
                             <div className="flex gap-3 pt-2">
                                 <button
                                     onClick={() => setEmailingReport(null)}
-                                    className="flex-1 py-3.5 px-4 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm"
+                                    className="flex-1 py-3.5 px-4 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm"
                                 >
                                     {t('common.cancel', 'Cancel')}
                                 </button>
