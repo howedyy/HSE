@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../provider/auth_provider.dart';
+import '../../../../core/network/api_client.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -39,6 +40,18 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A), // Sleek Dark Blue
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: Color(0xFF94A3B8)),
+            tooltip: 'Server Settings',
+            onPressed: _showServerSettingsDialog,
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -124,6 +137,18 @@ class _LoginPageState extends State<LoginPage> {
                   );
                 },
               ),
+              const SizedBox(height: 24),
+              TextButton.icon(
+                onPressed: _showServerSettingsDialog,
+                icon: const Icon(Icons.dns_outlined, size: 18, color: Color(0xFF94A3B8)),
+                label: Text(
+                  'Configure Server URL (Wi-Fi / Emulator)',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: const Color(0xFF94A3B8),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -156,6 +181,136 @@ class _LoginPageState extends State<LoginPage> {
           borderSide: const BorderSide(color: Colors.blueAccent, width: 2),
         ),
       ),
+    );
+  }
+
+  void _showServerSettingsDialog() async {
+    final currentUrl = await ApiClient.getSavedBaseUrl();
+    final urlController = TextEditingController(text: currentUrl);
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.dns_rounded, color: Colors.blueAccent),
+            const SizedBox(width: 10),
+            Text(
+              'Server Connection',
+              style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Enter the backend Base URL (with port):',
+                style: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: urlController,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'Base URL',
+                  labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                  filled: true,
+                  fillColor: const Color(0xFF0F172A),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.blueAccent, width: 1.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Quick Presets (Tap to select):',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF94A3B8),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildPresetChip(
+                    label: 'Android Emulator',
+                    url: 'http://10.0.2.2:8081/Edara-HSE111/api/',
+                    controller: urlController,
+                  ),
+                  _buildPresetChip(
+                    label: 'Wi-Fi (192.168.1.5:8081)',
+                    url: 'http://192.168.1.5:8081/Edara-HSE111/api/',
+                    controller: urlController,
+                  ),
+                  _buildPresetChip(
+                    label: 'Localhost (8081)',
+                    url: 'http://localhost:8081/Edara-HSE111/api/',
+                    controller: urlController,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: GoogleFonts.inter(color: const Color(0xFF94A3B8))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueAccent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () async {
+              await ApiClient.saveBaseUrl(urlController.text);
+              if (!ctx.mounted) return;
+              Navigator.pop(ctx);
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Server URL updated to: ${urlController.text.trim()}'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+            child: Text('Save', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPresetChip({
+    required String label,
+    required String url,
+    required TextEditingController controller,
+  }) {
+    return ActionChip(
+      label: Text(
+        label,
+        style: GoogleFonts.inter(fontSize: 12, color: Colors.white),
+      ),
+      backgroundColor: const Color(0xFF0F172A),
+      side: const BorderSide(color: Colors.blueAccent, width: 1),
+      onPressed: () {
+        controller.text = url;
+      },
     );
   }
 }

@@ -47,4 +47,33 @@ class ReportProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<Map<String, dynamic>> fetchFormOptions() async {
+    try {
+      return await reportRepository.getFormOptions();
+    } catch (e) {
+      return {'projects': [], 'departments': [], 'observations': []};
+    }
+  }
+
+  Future<bool> submitReport(Map<String, dynamic> reportData) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final success = await reportRepository.submitReport(reportData);
+      _isLoading = false;
+      if (success) {
+        await fetchReports(refresh: true);
+      }
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }

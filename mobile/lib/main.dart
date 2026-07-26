@@ -27,8 +27,10 @@ import 'features/daily_reports/presentation/provider/report_provider.dart';
 import 'features/daily_reports/domain/repositories/report_repository.dart';
 import 'features/daily_reports/data/data_sources/report_remote_data_source.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   final dio = Dio();
+  await ApiClient.initBaseUrl(dio);
   final apiClient = ApiClient(dio: dio);
 
   // Auth injection

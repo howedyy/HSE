@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../provider/report_provider.dart';
 import '../widgets/report_card.dart';
+import 'create_report_page.dart';
 
 class DailyReportsPage extends StatefulWidget {
   const DailyReportsPage({super.key});
@@ -48,11 +49,28 @@ class _DailyReportsPageState extends State<DailyReportsPage> {
         elevation: 0,
         actions: [
           IconButton(
+            icon: const Icon(Icons.add_circle_outline, color: Colors.blueAccent),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CreateReportPage()),
+            ),
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => Provider.of<ReportProvider>(context, listen: false)
                 .fetchReports(refresh: true),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CreateReportPage()),
+        ),
+        backgroundColor: Colors.blueAccent,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: Text('New Report', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
       ),
       body: Consumer<ReportProvider>(
         builder: (context, provider, _) {

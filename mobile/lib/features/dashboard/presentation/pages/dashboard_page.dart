@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../provider/dashboard_provider.dart';
 import '../../../auth/presentation/provider/auth_provider.dart';
 import '../../../../features/ptw/presentation/pages/ptw_list_page.dart';
+import '../../../../features/daily_reports/presentation/pages/daily_reports_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -119,7 +120,10 @@ class _DashboardPageState extends State<DashboardPage> {
                     title: 'Daily Reports',
                     subtitle: 'View recent site observations',
                     icon: Icons.history_edu_rounded,
-                    onTap: () {}, // Future implementation
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const DailyReportsPage()),
+                    ),
                   ),
                   
                   const SizedBox(height: 32),
